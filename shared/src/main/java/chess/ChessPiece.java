@@ -257,9 +257,10 @@ public class ChessPiece {
                         }
 
                         if (myPosition.getRow() == 2) {
+                            ChessPosition whiteBlockedPosition = new ChessPosition(myPosition.getRow() + 1, myPosition.getColumn());
                             ChessPosition whiteDoublePos = new ChessPosition(myPosition.getRow() + 2, myPosition.getColumn());
 
-                            if (board.getPiece(whiteDoublePos) == null) {
+                            if (board.getPiece(whiteBlockedPosition) == null && board.getPiece(whiteDoublePos) == null) {
                                 moves.add(new ChessMove(myPosition, whiteDoublePos, null));
                             }
                         }
@@ -281,9 +282,10 @@ public class ChessPiece {
                         }
 
                         if (myPosition.getRow() == 7) {
+                            ChessPosition blackBlockedPosition = new ChessPosition(myPosition.getRow() - 1, myPosition.getColumn());
                             ChessPosition blackDoublePos = new ChessPosition(myPosition.getRow() - 2, myPosition.getColumn());
 
-                            if (board.getPiece(blackDoublePos) == null) {
+                            if (board.getPiece(blackBlockedPosition) == null && board.getPiece(blackDoublePos) == null) {
                                 moves.add(new ChessMove(myPosition, blackDoublePos, null));
                             }
                         }
@@ -300,7 +302,7 @@ public class ChessPiece {
         ChessPiece targetCapturePiece = board.getPiece(capturePosition);
         if (targetCapturePiece != null) {
             if (targetCapturePiece.getTeamColor() != color) {
-                if (capturePosition.getRow() == 8) {
+                if (capturePosition.getRow() == 8 || capturePosition.getRow() == 1) {
                     moves.add(new ChessMove(myPosition, capturePosition, PieceType.QUEEN));
                     moves.add(new ChessMove(myPosition, capturePosition, PieceType.BISHOP));
                     moves.add(new ChessMove(myPosition, capturePosition, PieceType.KNIGHT));
