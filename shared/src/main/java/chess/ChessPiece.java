@@ -398,7 +398,7 @@ public class ChessPiece {
             case RIGHT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getRow() + i <= 8) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn(), currentPosition.getRow() + i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() + i, currentPosition.getColumn());
                     } else {
                         positions[i-1] = null;
                     }
@@ -432,7 +432,7 @@ public class ChessPiece {
             case LEFT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getRow() - i >= 1) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn(), currentPosition.getRow() - i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() - i, currentPosition.getColumn());
                     } else {
                         positions[i-1] = null;
                     }
