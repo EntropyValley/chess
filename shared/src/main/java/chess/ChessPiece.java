@@ -380,7 +380,7 @@ public class ChessPiece {
             case UP:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() + i <= 8) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() + i, currentPosition.getRow());
+                        positions[i-1] = new ChessPosition( currentPosition.getRow(), currentPosition.getColumn() + i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -389,7 +389,7 @@ public class ChessPiece {
             case UP_RIGHT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() + i <= 8 && currentPosition.getRow() + i <= 8) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() + i, currentPosition.getRow() + i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() + i, currentPosition.getColumn() + i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -398,7 +398,7 @@ public class ChessPiece {
             case RIGHT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getRow() + i <= 8) {
-                        positions[i-1] = new ChessPosition(currentPosition.getRow() + i, currentPosition.getColumn());
+                        positions[i-1] = new ChessPosition(currentPosition.getColumn(), currentPosition.getRow() + i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -407,7 +407,7 @@ public class ChessPiece {
             case DOWN_RIGHT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() - i >= 1 && currentPosition.getRow() + i <= 8) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() - i, currentPosition.getRow() + i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() + i, currentPosition.getColumn() - i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -416,14 +416,14 @@ public class ChessPiece {
             case DOWN:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() - i >= 1) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() - i, currentPosition.getRow());
+                        positions[i-1] = new ChessPosition(currentPosition.getRow(), currentPosition.getColumn() - i);
                     }
                 }
                 break;
             case DOWN_LEFT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() - i >= 1 && currentPosition.getRow() - i >= 1) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() - i, currentPosition.getRow() - i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() - i, currentPosition.getColumn() - i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -432,7 +432,7 @@ public class ChessPiece {
             case LEFT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getRow() - i >= 1) {
-                        positions[i-1] = new ChessPosition(currentPosition.getRow() - i, currentPosition.getColumn());
+                        positions[i-1] = new ChessPosition(currentPosition.getColumn(), currentPosition.getRow() - i);
                     } else {
                         positions[i-1] = null;
                     }
@@ -441,7 +441,7 @@ public class ChessPiece {
             case UP_LEFT:
                 for (int i = 1; i <= maxDistance; i++) {
                     if (currentPosition.getColumn() + i <= 8 && currentPosition.getRow() - i >= 1) {
-                        positions[i-1] = new ChessPosition(currentPosition.getColumn() + i, currentPosition.getRow() - i);
+                        positions[i-1] = new ChessPosition(currentPosition.getRow() - i, currentPosition.getColumn() + i);
                     } else {
                         positions[i-1] = null;
                     }
