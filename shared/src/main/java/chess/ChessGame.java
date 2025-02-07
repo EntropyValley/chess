@@ -77,9 +77,9 @@ public class ChessGame {
         ChessPosition kingPosition = null;
 
         // Find King
-        for (int i=1; i<=8; i++) {
-            for (int j=1; j<=8; j++) {
-                ChessPosition currentPosition = new ChessPosition(i, j);
+        for (int row=1; row<=8; row++) {
+            for (int col=1; col<=8; col++) {
+                ChessPosition currentPosition = new ChessPosition(row, col);
                 ChessPiece currentPiece = currentBoard.getPiece(currentPosition);
                 if (currentPiece != null) {
                     if (currentPiece.getTeamColor() == teamColor &&
@@ -99,9 +99,9 @@ public class ChessGame {
         final ChessPosition staticKingPosition = kingPosition;
 
         // Check for potential attacks
-        for (int i=1; i<=8; i++) {
-            for (int j=1; j<8; j++) {
-                ChessPosition currentPosition = new ChessPosition(i, j);
+        for (int row=1; row<=8; row++) {
+            for (int col=1; col<8; col++) {
+                ChessPosition currentPosition = new ChessPosition(row, col);
                 ChessPiece currentPiece = currentBoard.getPiece(currentPosition);
                 if (currentPiece != null) {
                     if (currentPiece.getTeamColor() != teamColor) {
@@ -138,7 +138,28 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // Assume no valid moves
+        boolean isInStalemate = true;
+
+        // Check for possible moves
+        for (int row=1; row<=8; row++) {
+            for (int col=1; col<=8; col++) {
+                ChessPosition currentPosition = new ChessPosition(row, col);
+                ChessPiece currentPiece = currentBoard.getPiece(currentPosition);
+                if (currentPiece != null) {
+                    if (currentPiece.getTeamColor() == teamColor) {
+                        Collection<ChessMove> pieceMoves = currentPiece.pieceMoves(currentBoard, currentPosition);
+                        if (!pieceMoves.isEmpty()) {
+                            isInStalemate = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return whether valid moves were found
+        return isInStalemate;
     }
 
     /**
