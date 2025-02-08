@@ -122,7 +122,7 @@ public class ChessGame {
 
         // Check for potential attacks
         for (int row=1; row<=8; row++) {
-            for (int col=1; col<8; col++) {
+            for (int col=1; col<=8; col++) {
                 ChessPosition currentPosition = new ChessPosition(row, col);
                 ChessPiece currentPiece = boardToCheck.getPiece(currentPosition);
                 if (currentPiece != null) {
