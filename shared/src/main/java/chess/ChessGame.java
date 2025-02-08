@@ -72,18 +72,21 @@ public class ChessGame {
         ChessPiece.PieceType promotionPieceType = move.getPromotionPiece();
         ChessPiece existingPiece = currentBoard.getPiece(startPosition);
 
+        // No piece; can't be moved
         if (existingPiece == null) {
             throw new InvalidMoveException("No Piece to move at " + startPosition);
         }
 
         TeamColor movingColor = existingPiece.getTeamColor();
 
+        // Not the current turn; can't move a piece
         if (movingColor != currentTurn) {
             throw new InvalidMoveException("Not " + movingColor + "'s turn");
         }
 
         Collection<ChessMove> validPieceMoves = validMoves(startPosition);
 
+        // If move is found amidst valid moves, make the move;  Else, the move cannot be performed
         if (validPieceMoves.contains(move)) {
             currentBoard.addPiece(startPosition, null);
             currentBoard.addPiece(
@@ -94,6 +97,7 @@ public class ChessGame {
             throw new InvalidMoveException("Invalid Move:" + move);
         }
 
+        // Set the turn to the next team
         currentTurn = movingColor == TeamColor.BLACK ? TeamColor.WHITE : TeamColor.BLACK;
     }
 
@@ -107,10 +111,11 @@ public class ChessGame {
         return arbitraryBoardCheck(teamColor, currentBoard); // Check current board for check
     }
 
+    // Check to see if a provided team is in check on a provided board
     private boolean arbitraryBoardCheck(TeamColor teamColor, ChessBoard boardToCheck) {
         final ChessPosition kingPosition = findKingPosition(teamColor, boardToCheck);
 
-        // Check for found king
+        // Check if king was found
         if (kingPosition == null) {
             return false;
         }
@@ -134,13 +139,15 @@ public class ChessGame {
             }
         }
 
-        // No check move found; not in check
+        // No opponent move attacks king - not in check
         return false;
     }
 
+    // Find the position of the king on a given board
     private static ChessPosition findKingPosition(TeamColor teamColor, ChessBoard boardToCheck) {
         ChessPosition kingPosition = null;
 
+        // Iterate over board to find king
         for (int row=1; row<=8; row++) {
             for (int col=1; col<=8; col++) {
                 ChessPosition currentPosition = new ChessPosition(row, col);
@@ -168,10 +175,11 @@ public class ChessGame {
             return false;
         }
 
-        HashSet<ChessMove> validMoves = getValidMovesForBoard(currentBoard, teamColor);
-        return validMoves.isEmpty();
+        // If there are no moves, in checkmate
+        return getValidMovesForBoard(currentBoard, teamColor).isEmpty();
     }
 
+    // Get all possible moves for a team on a given board (potential or current)
     private HashSet<ChessMove> getValidMovesForBoard(ChessBoard boardToSearch, TeamColor teamColor) {
         // List of potential moves
         HashSet<ChessMove> validMoves = new HashSet<>();
@@ -188,35 +196,49 @@ public class ChessGame {
         return validMoves;
     }
 
+    // Get valid moves for a single position on an arbitrary board (either potential or current)
     private HashSet<ChessMove> getValidPositionMovesForBoard(ChessBoard boardToSearch, TeamColor teamColor, ChessPosition currentPosition) {
         ChessPiece currentPiece = boardToSearch.getPiece(currentPosition);
         HashSet<ChessMove> validPieceMoves = new HashSet<>();
 
+        // If there's no current piece, there are no valid moves
         if (currentPiece != null) {
+
+            // If the current team is trying to move a piece that isn't theirs, there are no valid moves
             if (currentPiece.getTeamColor() == teamColor) {
+                // Fetch possible moves
                 Collection<ChessMove> pieceMoves = currentPiece.pieceMoves(boardToSearch, currentPosition);
 
+                // Iterate over these possible moves and create a potential board to see if it puts the team in check
                 for (ChessMove move : pieceMoves) {
                     ChessBoard potentialBoard = createPotentialBoard(boardToSearch, move);
                     if (!arbitraryBoardCheck(teamColor, potentialBoard)) {
-                        validPieceMoves.add(move);
+                        validPieceMoves.add(move); // If move doesn't put team in check, it's valid
                     }
                 }
             }
         }
+
         return validPieceMoves;
     }
 
+    // Create a board that represents a potential future for a provided board given a potential move
     private static ChessBoard createPotentialBoard(ChessBoard boardToSearch, ChessMove move) {
+        // Create new board so that it can be changed and checked without affecting currentBoard
         ChessBoard potentialBoard = new ChessBoard();
+
+        // Unpack move to avoid repetition
         ChessPosition startPosition = move.getStartPosition();
         ChessPosition endPosition = move.getEndPosition();
         ChessPiece.PieceType promotionPiece = move.getPromotionPiece();
+
+        // Get piece and then generate resultant piece of move
         ChessPiece currentPiece = boardToSearch.getPiece(startPosition);
         ChessPiece resultantPiece = promotionPiece == null ?
             currentPiece :
             new ChessPiece(currentPiece.getTeamColor(), promotionPiece);
 
+        // Iterate over the board; add move in place, add remaining pieces to board in existing locations
         for (int row=1; row<=8; row++) {
             for (int col=1; col<=8; col++) {
                 ChessPosition currentPosition = new ChessPosition(row, col);
@@ -230,6 +252,7 @@ public class ChessGame {
             }
         }
 
+        // Return new potential board
         return potentialBoard;
     }
 
@@ -245,8 +268,8 @@ public class ChessGame {
             return false;
         }
 
-        HashSet<ChessMove> validMoves = getValidMovesForBoard(currentBoard, teamColor);
-        return validMoves.isEmpty();
+        // If not in check but no valid moves available, stalemate
+        return getValidMovesForBoard(currentBoard, teamColor).isEmpty();
     }
 
     /**
