@@ -124,7 +124,8 @@ public class ChessGame {
                     if (currentPiece.getTeamColor() != teamColor) {
                         Collection<ChessMove> opponentMoves = currentPiece.pieceMoves(boardToCheck, currentPosition);
                         if (opponentMoves.stream().anyMatch(
-                                move -> move.getEndPosition() == kingPosition)
+                                move -> move.getEndPosition().equals(kingPosition)
+                            )
                         ) {
                             return true;
                         }
@@ -197,9 +198,7 @@ public class ChessGame {
 
                 for (ChessMove move : pieceMoves) {
                     ChessBoard potentialBoard = createPotentialBoard(boardToSearch, move);
-                    boolean potentialInCheck = arbitraryBoardCheck(teamColor, potentialBoard);
-
-                    if (!potentialInCheck) {
+                    if (!arbitraryBoardCheck(teamColor, potentialBoard)) {
                         validPieceMoves.add(move);
                     }
                 }
@@ -215,8 +214,8 @@ public class ChessGame {
         ChessPiece.PieceType promotionPiece = move.getPromotionPiece();
         ChessPiece currentPiece = boardToSearch.getPiece(startPosition);
         ChessPiece resultantPiece = promotionPiece == null ?
-                currentPiece :
-                new ChessPiece(currentPiece.getTeamColor(), promotionPiece);
+            currentPiece :
+            new ChessPiece(currentPiece.getTeamColor(), promotionPiece);
 
         for (int row=1; row<=8; row++) {
             for (int col=1; col<=8; col++) {
