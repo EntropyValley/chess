@@ -4,8 +4,8 @@ import chess.ChessGame;
 
 public record GameData(
         int gameID,
-        String whiteUserID,
-        String blackUserID,
+        String whiteUsername,
+        String blackUsername,
         String gameName,
         ChessGame game
 ) {}

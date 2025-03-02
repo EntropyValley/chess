@@ -9,7 +9,7 @@ public class AuthDAOMem implements AuthDAO {
     private HashSet<AuthData> authDataStorage;
 
     public AuthDAOMem() {
-        this.authDataStorage = new HashSet<AuthData>();
+        this.authDataStorage = new HashSet<>();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class AuthDAOMem implements AuthDAO {
         try {
             this.authDataStorage.clear();
         } catch (Exception exception) {
-            throw new DataAccessException("Could not clear data storage");
+            throw new DataAccessException("Could not clear data storage: (" + exception.getMessage() + ")");
         }
     }
 }
