@@ -35,6 +35,15 @@ public class Server {
 
         Spark.delete("/db", this::clear);
 
+        Spark.post("/user", userHandler::_register);
+
+        Spark.post("/session", userHandler::_login);
+        Spark.delete("/session", userHandler::_logout);
+
+        Spark.get("/game", gameHandler::_list);
+        Spark.post("/game", gameHandler::_create);
+        Spark.put("/game", gameHandler::_join);
+
         Spark.exception(BadRequestException.class, this::badRequestExceptionHandler);
         Spark.exception(UnauthorizedException.class, this::unauthorizedExceptionHandler);
         Spark.exception(UsernameTakenException.class, this::usernameTakenExceptionHandler);
