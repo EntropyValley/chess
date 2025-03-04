@@ -270,13 +270,10 @@ public class ChessPiece {
     private void getBishopMoves(ChessBoard board, ChessPosition myPosition, HashSet<ChessMove> moves) {
         ChessPosition[] bishopUpRightPositions = getDirectedPositions(myPosition, Direction.UP_RIGHT, 8);
         generateMovesFromPositions(board, myPosition, moves, bishopUpRightPositions);
-
         ChessPosition[] bishopDownRightPositions = getDirectedPositions(myPosition, Direction.DOWN_RIGHT, 8);
         generateMovesFromPositions(board, myPosition, moves, bishopDownRightPositions);
-
         ChessPosition[] bishopDownLeftPositions = getDirectedPositions(myPosition, Direction.DOWN_LEFT, 8);
         generateMovesFromPositions(board, myPosition, moves, bishopDownLeftPositions);
-
         ChessPosition[] bishopUpLeftPositions = getDirectedPositions(myPosition, Direction.UP_LEFT, 8);
         generateMovesFromPositions(board, myPosition, moves, bishopUpLeftPositions);
     }
@@ -284,25 +281,18 @@ public class ChessPiece {
     private void getQueenMoves(ChessBoard board, ChessPosition myPosition, HashSet<ChessMove> moves) {
         ChessPosition[] queenUpPositions = getDirectedPositions(myPosition, Direction.UP, 8);
         generateMovesFromPositions(board, myPosition, moves, queenUpPositions);
-
         ChessPosition[] queenUpRightPositions = getDirectedPositions(myPosition, Direction.UP_RIGHT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenUpRightPositions);
-
         ChessPosition[] queenRightPositions = getDirectedPositions(myPosition, Direction.RIGHT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenRightPositions);
-
         ChessPosition[] queenDownRightPositions = getDirectedPositions(myPosition, Direction.DOWN_RIGHT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenDownRightPositions);
-
         ChessPosition[] queenDownPositions = getDirectedPositions(myPosition, Direction.DOWN, 8);
         generateMovesFromPositions(board, myPosition, moves, queenDownPositions);
-
         ChessPosition[] queenDownLeftPositions = getDirectedPositions(myPosition, Direction.DOWN_LEFT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenDownLeftPositions);
-
         ChessPosition[] queenLeftPositions = getDirectedPositions(myPosition, Direction.LEFT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenLeftPositions);
-
         ChessPosition[] queenUpLeftPositions = getDirectedPositions(myPosition, Direction.UP_LEFT, 8);
         generateMovesFromPositions(board, myPosition, moves, queenUpLeftPositions);
     }
@@ -310,25 +300,18 @@ public class ChessPiece {
     private void getKingMoves(ChessBoard board, ChessPosition myPosition, HashSet<ChessMove> moves) {
         ChessPosition kingUp = getDirectedPositions(myPosition, Direction.UP, 1)[0];
         getKingMove(board, myPosition, moves, kingUp);
-
         ChessPosition kingUpRight = getDirectedPositions(myPosition, Direction.UP_RIGHT, 1)[0];
         getKingMove(board, myPosition, moves, kingUpRight);
-
         ChessPosition kingRight = getDirectedPositions(myPosition, Direction.RIGHT, 1)[0];
         getKingMove(board, myPosition, moves, kingRight);
-
         ChessPosition kingDownRight = getDirectedPositions(myPosition, Direction.DOWN_RIGHT, 1)[0];
         getKingMove(board, myPosition, moves, kingDownRight);
-
         ChessPosition kingDown = getDirectedPositions(myPosition, Direction.DOWN, 1)[0];
         getKingMove(board, myPosition, moves, kingDown);
-
         ChessPosition kingDownLeft = getDirectedPositions(myPosition, Direction.DOWN_LEFT, 1)[0];
         getKingMove(board, myPosition, moves, kingDownLeft);
-
         ChessPosition kingLeft = getDirectedPositions(myPosition, Direction.LEFT, 1)[0];
         getKingMove(board, myPosition, moves, kingLeft);
-
         ChessPosition kingUpLeft = getDirectedPositions(myPosition, Direction.UP_LEFT, 1)[0];
         getKingMove(board, myPosition, moves, kingUpLeft);
     }
@@ -352,7 +335,6 @@ public class ChessPiece {
     private void getKingMove(ChessBoard board, ChessPosition myPosition, HashSet<ChessMove> moves, ChessPosition position) {
         if (position != null) {
             ChessPiece kingUpRightTarget = board.getPiece(position);
-
             if (kingUpRightTarget != null) {
                 if (kingUpRightTarget.getTeamColor() != color) {
                     moves.add(new ChessMove(myPosition, position, null));
@@ -368,9 +350,7 @@ public class ChessPiece {
             if (targetPositions[i] == null) {
                 break;
             }
-
             ChessPiece queenTarget = board.getPiece(targetPositions[i]);
-
             if (queenTarget == null) {
                 moves.add(new ChessMove(myPosition, targetPositions[i], null));
             } else {
@@ -408,7 +388,6 @@ public class ChessPiece {
 
     private ChessPosition[] getDirectedPositions(ChessPosition currentPosition, Direction targetDir, int maxDistance) {
         ChessPosition[] positions = new ChessPosition[maxDistance];
-
         switch (targetDir) {
             case UP:
                 for (int i = 1; i <= maxDistance; i++) {
@@ -481,7 +460,6 @@ public class ChessPiece {
                 }
                 break;
         }
-
         return positions;
     }
 
@@ -492,7 +470,6 @@ public class ChessPiece {
         } else if (this == o) {
             return true;
         }
-
         ChessPiece that = (ChessPiece) o;
         return color == that.color && type == that.type;
     }
