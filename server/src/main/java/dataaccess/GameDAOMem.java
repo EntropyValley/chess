@@ -10,7 +10,7 @@ public class GameDAOMem implements GameDAO {
 
     public GameDAOMem() {
         gameDataStorage = new HashSet<>();
-        nextID = 0;
+        nextID = 1;
     }
 
     @Override
@@ -25,10 +25,12 @@ public class GameDAOMem implements GameDAO {
     public void createGame(GameData game) throws DataAccessException {
         try {
             findGame(game.gameID());
-            gameDataStorage.add(game);
         } catch (DataAccessException exception) {
-            throw new DataAccessException("Game with ID=" + game.gameID() + " already exists");
+            gameDataStorage.add(game);
+            return;
         }
+
+        throw new DataAccessException("Game with ID=" + game.gameID() + " already exists");
     }
 
     @Override
