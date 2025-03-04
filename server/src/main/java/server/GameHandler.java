@@ -79,10 +79,18 @@ public class GameHandler {
             throw new BadRequestException("Missing Field");
         }
 
+        ChessGame.TeamColor color;
+
+        try {
+            color = ChessGame.TeamColor.valueOf(gameToJoin.get("playerColor").getAsString());
+        } catch (Exception exception) {
+            throw new BadRequestException("Invalid Color");
+        }
+
         gameService.joinGame(
             authToken,
             gameToJoin.get("gameID").getAsInt(),
-            ChessGame.TeamColor.valueOf(gameToJoin.get("playerColor").getAsString())
+            color
         );
         response.status(200);
         return "{}";
