@@ -52,7 +52,7 @@ public class UserService {
         return getNewAuthData(userData);
     }
 
-    public AuthData login(UserData user) {
+    public AuthData login(UserData user) throws UnauthorizedException {
         boolean isAuthed;
 
         try {
@@ -68,7 +68,7 @@ public class UserService {
         }
     }
 
-    public void logout(String authToken) {
+    public void logout(String authToken)  throws UnauthorizedException{
         try {
             authDAO.deleteAuth(authToken);
         } catch (DataAccessException exception) {
