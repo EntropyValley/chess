@@ -83,17 +83,17 @@ public class Server {
     }
 
     private void usernameTakenExceptionHandler(UsernameTakenException exception, Request request, Response response) {
-        response.status(400);
-        response.body("{\"message\": \"Error: already taken\"");
+        response.status(403);
+        response.body("{\"message\": \"Error: already taken\"}");
     }
 
     private void gameNotFoundExceptionHandler(GameNotFoundException exception, Request request, Response response) {
         response.status(400);
-        response.body("{\"message\": \"Error: game not found\"");
+        response.body("{\"message\": \"Error: game not found\"}");
     }
 
     private void colorTakenExceptionHandler(ColorTakenException exception, Request request, Response response) {
-        response.status(400);
+        response.status(403);
         response.body("{\"message\": \"Error: already taken\"}");
     }
 

@@ -47,16 +47,16 @@ public class UserHandler {
         return new Gson().toJson(authData);
     }
 
-    public Object _logout(Request request, Response response) throws BadRequestException, UnauthorizedException {
+    public Object _logout(Request request, Response response) throws UnauthorizedException {
         String authToken;
         try {
             authToken = request.headers("authorization");
         } catch (Exception exception) {
-            throw new BadRequestException("Missing Field");
+            throw new UnauthorizedException("Missing Field");
         }
 
         if (authToken == null) {
-            throw new BadRequestException("Missing Field");
+            throw new UnauthorizedException("Missing Field");
         }
 
         userService.logout(authToken);

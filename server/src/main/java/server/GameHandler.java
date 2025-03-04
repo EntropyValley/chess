@@ -5,10 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import dataaccess.DataAccessException;
-import exceptions.BadRequestException;
-import exceptions.ColorTakenException;
-import exceptions.GameNotFoundException;
-import exceptions.NoIDAvailableException;
+import exceptions.*;
 import model.GameData;
 import service.GameService;
 
@@ -24,21 +21,21 @@ public class GameHandler {
         this.gameService = gameService;
     }
 
-    private static String checkAuthToken(Request request) throws BadRequestException {
+    private static String checkAuthToken(Request request) throws UnauthorizedException {
         String authToken;
         try {
             authToken = request.headers("authorization");
         } catch (Exception exception) {
-            throw new BadRequestException("Missing Field");
+            throw new UnauthorizedException("Missing Auth");
         }
 
         if (authToken == null) {
-            throw new BadRequestException("Missing Field");
+            throw new UnauthorizedException("Missing Auth");
         }
         return authToken;
     }
 
-    public Object _list(Request request, Response response) throws BadRequestException, DataAccessException {
+    public Object _list(Request request, Response response) throws DataAccessException {
         String authToken = checkAuthToken(request);
 
         HashSet<GameData> games = gameService.listGames(authToken);
