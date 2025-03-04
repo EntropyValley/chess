@@ -6,9 +6,11 @@ import java.util.HashSet;
 
 public class GameDAOMem implements GameDAO {
     HashSet<GameData> gameDataStorage;
+    int nextID;
 
     public GameDAOMem() {
         gameDataStorage = new HashSet<>();
+        nextID = 0;
     }
 
     @Override
@@ -40,16 +42,6 @@ public class GameDAOMem implements GameDAO {
     }
 
     @Override
-    public boolean doesGameExist(int gameID) {
-        try {
-            findGame(gameID);
-            return true;
-        } catch (DataAccessException exception) {
-            return false;
-        }
-    }
-
-    @Override
     public void updateGame(GameData game) throws DataAccessException {
         try {
             gameDataStorage.remove(findGame(game.gameID()));
@@ -57,6 +49,14 @@ public class GameDAOMem implements GameDAO {
         } catch(DataAccessException exception) {
             throw new DataAccessException("Multiple copies of game with ID=" + game.gameID() + " exist within memory");
         }
+    }
+
+    @Override
+    public int getNextID() throws DataAccessException {
+        if (nextID >= 0) {
+            return nextID++;
+        }
+        throw new DataAccessException("Invalid ID");
     }
 
     @Override

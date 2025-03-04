@@ -12,8 +12,6 @@ public record GameData(
         ChessGame game
 ) {
     public GameData {
-        Objects.requireNonNull(whiteUsername);
-        Objects.requireNonNull(blackUsername);
         Objects.requireNonNull(gameName);
         Objects.requireNonNull(game);
     }

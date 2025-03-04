@@ -19,15 +19,6 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public void clear() {
-        try {
-            userDAO.clear();
-            authDAO.clear();
-        } catch (DataAccessException exception) {
-            System.out.println("Unable to clear user-tangential data");
-        }
-    }
-
     private AuthData getNewAuthData(UserData user) {
         AuthData authData;
 
@@ -44,6 +35,11 @@ public class UserService {
         }
 
         return authData;
+    }
+
+    public void clear() throws DataAccessException {
+        userDAO.clear();
+        authDAO.clear();
     }
 
     public AuthData register(UserData userData) throws UsernameTakenException {

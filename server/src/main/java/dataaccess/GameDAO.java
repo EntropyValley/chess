@@ -8,7 +8,7 @@ public interface GameDAO {
     HashSet<GameData> requestGames() throws DataAccessException;
     void createGame(GameData game) throws DataAccessException;
     GameData findGame(int gameID) throws DataAccessException;
-    boolean doesGameExist(int gameID);
     void updateGame(GameData game) throws DataAccessException;
+    int getNextID() throws DataAccessException;
     void clear() throws DataAccessException;
 }

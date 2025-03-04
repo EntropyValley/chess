@@ -9,24 +9,17 @@ import service.*;
 import exceptions.*;
 
 public class Server {
-    private UserDAO userDAO;
-    private AuthDAO authDAO;
-    private GameDAO gameDAO;
 
-    private UserService userService;
-    private GameService gameService;
+    private final UserService userService;
+    private final GameService gameService;
 
-    private UserHandler userHandler;
-    private GameHandler gameHandler;
+    private final UserHandler userHandler;
+    private final GameHandler gameHandler;
 
     public Server() {
-        try {
-            this.userDAO = new UserDAOMem();
-            this.authDAO = new AuthDAOMem();
-            this.gameDAO = new GameDAOMem();
-        } catch (DataAccessException exception) {
-            System.out.println("Failed to initialize DAO Memory");
-        }
+        UserDAO userDAO = new UserDAOMem();
+        AuthDAO authDAO = new AuthDAOMem();
+        GameDAO gameDAO = new GameDAOMem();
 
         this.userService = new UserService(userDAO, authDAO);
         this.gameService = new GameService(gameDAO, authDAO);
@@ -59,8 +52,13 @@ public class Server {
     }
 
     private Object clear(Request request, Response response) {
-        userService.clear();
-        gameService.clear();
+        try {
+            userService.clear();
+            gameService.clear();
+        } catch (DataAccessException exception) {
+            response.status(500);
+            return "{\"message\": \"Error: " + exception.getMessage() + "\"}";
+        }
         response.status(200);
         return "{}";
     }
