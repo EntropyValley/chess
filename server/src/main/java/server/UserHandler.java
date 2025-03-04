@@ -18,7 +18,7 @@ public class UserHandler {
         this.userService = userService;
     }
 
-    public Object _register(Request request, Response response) throws BadRequestException, UsernameTakenException {
+    public Object hRegister(Request request, Response response) throws BadRequestException, UsernameTakenException {
         UserData userData;
         try {
             userData = new Gson().fromJson(request.body(), UserData.class);
@@ -35,7 +35,7 @@ public class UserHandler {
         return new Gson().toJson(authData);
     }
 
-    public Object _login(Request request, Response response) throws BadRequestException, UnauthorizedException {
+    public Object hLogin(Request request, Response response) throws BadRequestException, UnauthorizedException {
         UserData userData;
         try {
             userData = new Gson().fromJson(request.body(), UserData.class);
@@ -47,7 +47,7 @@ public class UserHandler {
         return new Gson().toJson(authData);
     }
 
-    public Object _logout(Request request, Response response) throws UnauthorizedException {
+    public Object hLogout(Request request, Response response) throws UnauthorizedException {
         String authToken;
         try {
             authToken = request.headers("authorization");

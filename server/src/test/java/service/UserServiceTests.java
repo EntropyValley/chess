@@ -42,7 +42,7 @@ public class UserServiceTests {
     @Test
     @Order(1)
     @DisplayName("Normal Register")
-    void register_normal() {
+    void registerNormal() {
         UserData userData = new UserData("test1", "test2", "test3");
         AuthData authData;
         try {
@@ -58,7 +58,7 @@ public class UserServiceTests {
     @Test
     @Order(2)
     @DisplayName("Duplicate Username Register")
-    void register_duplicate() {
+    void registerDuplicate() {
         UserData userData = new UserData("test1", "test2", "test3");
 
         try {
@@ -79,7 +79,7 @@ public class UserServiceTests {
     @Test
     @Order(3)
     @DisplayName("Normal Login")
-    void login_normal() {
+    void loginNormal() {
         UserData userData = new UserData("test1", "test2", "test3");
         try {
              userService.register(userData);
@@ -101,7 +101,7 @@ public class UserServiceTests {
     @Test
     @Order(4)
     @DisplayName("Invalid Login")
-    void login_invalid() {
+    void loginInvalid() {
         UserData userData = new UserData("test1", "test2", "test3");
 
         try {
@@ -116,7 +116,7 @@ public class UserServiceTests {
     @Test
     @Order(5)
     @DisplayName("Normal Logout")
-    void logout_normal() {
+    void logoutNormal() {
         UserData userData = new UserData("test1", "test2", "test3");
         AuthData authData;
         try {
@@ -143,7 +143,7 @@ public class UserServiceTests {
     @Test
     @Order(6)
     @DisplayName("Invalid Token Logout")
-    void logout_invalid_token() {
+    void logoutInvalid() {
         try {
             userService.logout(UUID.randomUUID().toString());
         } catch (UnauthorizedException e) {

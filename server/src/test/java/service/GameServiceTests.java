@@ -45,7 +45,7 @@ public class GameServiceTests {
     @Test
     @Order(1)
     @DisplayName("Normal List Games")
-    void list_normal() {
+    void listNormal() {
         String authToken = UUID.randomUUID().toString();
         try {
             authDAO.addAuth(new AuthData("testUser", authToken));
@@ -78,7 +78,7 @@ public class GameServiceTests {
     @Test
     @Order(2)
     @DisplayName("Bad Auth List Games")
-    void list_no_auth() throws DataAccessException {
+    void listNoAuth() throws DataAccessException {
         String authToken = UUID.randomUUID().toString();
 
         GameData game1 = new GameData(1, null, null, "Game 1", new ChessGame());
@@ -105,7 +105,7 @@ public class GameServiceTests {
     @Test
     @Order(3)
     @DisplayName("Normal Create Game")
-    void create_normal() {
+    void createNormal() {
         String authToken = UUID.randomUUID().toString();
         try {
             authDAO.addAuth(new AuthData("testUser", authToken));
@@ -133,7 +133,7 @@ public class GameServiceTests {
     @Test
     @Order(4)
     @DisplayName("Null Name Create Game")
-    void create_null() {
+    void createNull() {
         String authToken = UUID.randomUUID().toString();
         try {
             authDAO.addAuth(new AuthData("testUser", authToken));
@@ -155,7 +155,7 @@ public class GameServiceTests {
     @Test
     @Order(5)
     @DisplayName("Normal Join Game")
-    void join_normal()  {
+    void joinNormal()  {
         String authToken = UUID.randomUUID().toString();
         try {
             authDAO.addAuth(new AuthData("testUser", authToken));
@@ -189,7 +189,7 @@ public class GameServiceTests {
     @Test
     @Order(6)
     @DisplayName("Already Taken Join Game")
-    void join_already_taken() {
+    void joinAlreadyTaken() {
         String authToken = UUID.randomUUID().toString();
         try {
             authDAO.addAuth(new AuthData("testUser1", authToken));

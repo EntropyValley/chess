@@ -35,7 +35,7 @@ public class GameHandler {
         return authToken;
     }
 
-    public Object _list(Request request, Response response) throws DataAccessException {
+    public Object hList(Request request, Response response) throws DataAccessException {
         String authToken = checkAuthToken(request);
 
         HashSet<GameData> games = gameService.listGames(authToken);
@@ -43,7 +43,7 @@ public class GameHandler {
         return new Gson().toJson(Map.of("games", games));
     }
 
-    public Object _create(Request request, Response response) throws BadRequestException, NoIDAvailableException {
+    public Object hCreate(Request request, Response response) throws BadRequestException, NoIDAvailableException {
         String authToken = checkAuthToken(request);
 
         JsonObject newGame;
@@ -62,7 +62,7 @@ public class GameHandler {
         return "{\"gameID\": " + gameID + "}";
     }
 
-    public Object _join(
+    public Object hJoin(
             Request request,
             Response response
     ) throws BadRequestException, ColorTakenException, DataAccessException, GameNotFoundException {

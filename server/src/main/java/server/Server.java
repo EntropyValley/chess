@@ -35,14 +35,14 @@ public class Server {
 
         Spark.delete("/db", this::clear);
 
-        Spark.post("/user", userHandler::_register);
+        Spark.post("/user", userHandler::hRegister);
 
-        Spark.post("/session", userHandler::_login);
-        Spark.delete("/session", userHandler::_logout);
+        Spark.post("/session", userHandler::hLogin);
+        Spark.delete("/session", userHandler::hLogout);
 
-        Spark.get("/game", gameHandler::_list);
-        Spark.post("/game", gameHandler::_create);
-        Spark.put("/game", gameHandler::_join);
+        Spark.get("/game", gameHandler::hList);
+        Spark.post("/game", gameHandler::hCreate);
+        Spark.put("/game", gameHandler::hJoin);
 
         Spark.exception(BadRequestException.class, this::badRequestExceptionHandler);
         Spark.exception(UnauthorizedException.class, this::unauthorizedExceptionHandler);

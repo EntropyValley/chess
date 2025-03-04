@@ -123,23 +123,30 @@ public class ChessGame {
         // Check for potential attacks
         for (int row=1; row<=8; row++) {
             for (int col=1; col<=8; col++) {
-                ChessPosition currentPosition = new ChessPosition(row, col);
-                ChessPiece currentPiece = boardToCheck.getPiece(currentPosition);
-                if (currentPiece != null) {
-                    if (currentPiece.getTeamColor() != teamColor) {
-                        Collection<ChessMove> opponentMoves = currentPiece.pieceMoves(boardToCheck, currentPosition);
-                        if (opponentMoves.stream().anyMatch(
-                                move -> move.getEndPosition().equals(kingPosition)
-                            )
-                        ) {
-                            return true;
-                        }
-                    }
+                if (checkForAttacks(teamColor, boardToCheck, row, col, kingPosition)) {
+                    return true;
                 }
             }
         }
 
         // No opponent move attacks king - not in check
+        return false;
+    }
+
+    private static boolean checkForAttacks(TeamColor teamColor, ChessBoard boardToCheck, int row, int col, ChessPosition kingPosition) {
+        ChessPosition currentPosition = new ChessPosition(row, col);
+        ChessPiece currentPiece = boardToCheck.getPiece(currentPosition);
+        if (currentPiece != null) {
+            if (currentPiece.getTeamColor() != teamColor) {
+                Collection<ChessMove> opponentMoves = currentPiece.pieceMoves(boardToCheck, currentPosition);
+                if (opponentMoves.stream().anyMatch(
+                        move -> move.getEndPosition().equals(kingPosition)
+                    )
+                ) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
