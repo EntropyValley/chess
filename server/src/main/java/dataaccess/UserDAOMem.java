@@ -4,8 +4,6 @@ import model.UserData;
 
 import java.util.HashSet;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
-
 public class UserDAOMem implements UserDAO {
     private final HashSet<UserData> userDataStorage;
 
@@ -30,7 +28,7 @@ public class UserDAOMem implements UserDAO {
         } catch (DataAccessException exception) {
             UserData hashedUserData = new UserData(
                     userData.username(),
-                    BCrypt.withDefaults().hashToString(10, userData.password().toCharArray()),
+                    userData.password(),
                     userData.email()
             );
             userDataStorage.add(hashedUserData);
@@ -43,8 +41,7 @@ public class UserDAOMem implements UserDAO {
     @Override
     public boolean validateUser(String username, String password) throws DataAccessException {
         UserData userData = getUser(username);
-        BCrypt.Result hashResult = BCrypt.verifyer().verify(password.toCharArray(), userData.password().toCharArray());
-        return hashResult.verified;
+        return userData.password().equals(password);
     }
 
     @Override
