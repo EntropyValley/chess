@@ -62,7 +62,7 @@ public class GameHandler {
         return "{\"gameID\": " + gameID + "}";
     }
 
-    public Object hJoin(
+    public Object _join(
             Request request,
             Response response
     ) throws BadRequestException, ColorTakenException, DataAccessException, GameNotFoundException {
