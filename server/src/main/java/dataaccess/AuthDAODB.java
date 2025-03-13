@@ -1,6 +1,5 @@
 package dataaccess;
 
-import exceptions.BadRequestException;
 import model.AuthData;
 
 import java.sql.Connection;
@@ -82,10 +81,32 @@ public class AuthDAODB implements AuthDAO {
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                "DELETE FROM authenticationPairs WHERE authToken = ?"
+            )) {
+                statement.setString(1, authToken);
+                statement.executeUpdate();
+            } catch (SQLException exception) {
+                throw new DataAccessException("Unable to remove AuthData");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate database connection");
+        }
     }
 
     @Override
     public void clear() throws DataAccessException {
-
+        try (Connection connection = DatabaseManager.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                "TRUNCATE TABLE authenticationPairs"
+            )) {
+                statement.executeUpdate();
+            } catch (SQLException exception) {
+                throw new DataAccessException("Unable to clear authenticationPairs table");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate database connection");
+        }
     }
 }
