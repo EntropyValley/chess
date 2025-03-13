@@ -31,14 +31,18 @@ public class AuthDAOTests {
     @Order(1)
     @DisplayName("Normal Add Auth")
     void addAuthNormal() {
-        try {
-            authDAODB.addAuth(new AuthData("hi", "goodbye"));
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        addSingleAuth();
 
         try {
             authDAODB.getAuth("goodbye");
+        } catch (DataAccessException exception) {
+            fail();
+        }
+    }
+
+    private void addSingleAuth() {
+        try {
+            authDAODB.addAuth(new AuthData("hi", "goodbye"));
         } catch (DataAccessException exception) {
             fail();
         }
@@ -48,11 +52,7 @@ public class AuthDAOTests {
     @Order(2)
     @DisplayName("Normal Get Auth")
     void getAuthNormal() {
-        try {
-            authDAODB.addAuth(new AuthData("hi", "goodbye"));
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        addSingleAuth();
 
         try {
             authDAODB.getAuth("goodbye");
@@ -65,11 +65,7 @@ public class AuthDAOTests {
     @Order(3)
     @DisplayName("Normal Delete Auth")
     void deleteAuthNormal() {
-        try {
-            authDAODB.addAuth(new AuthData("hi", "goodbye"));
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        addSingleAuth();
 
         try {
             authDAODB.deleteAuth("goodbye");
@@ -82,11 +78,7 @@ public class AuthDAOTests {
     @Order(4)
     @DisplayName("Normal Clear Auth")
     void clearAuthNormal() {
-        try {
-            authDAODB.addAuth(new AuthData("hi", "goodbye"));
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        addSingleAuth();
 
         try {
             authDAODB.clear();
@@ -99,11 +91,7 @@ public class AuthDAOTests {
     @Order(5)
     @DisplayName("Bad Add Auth")
     void addAuthBad() {
-        try {
-            authDAODB.addAuth(new AuthData("hi", "goodbye"));
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        addSingleAuth();
 
         try {
             authDAODB.addAuth(new AuthData("hi", "goodbye"));

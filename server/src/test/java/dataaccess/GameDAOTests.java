@@ -54,19 +54,7 @@ public class GameDAOTests {
     @Order(2)
     @DisplayName("Normal Request Games")
     void requestGamesNormal() {
-        try {
-            gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(2, null, null, "New Game 2", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(3, null, null, "New Game 3", new ChessGame())
-            );
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        createThreeGames();
 
         try {
             HashSet<GameData> games = gameDAODB.requestGames();
@@ -80,19 +68,7 @@ public class GameDAOTests {
     @Order(3)
     @DisplayName("Normal Find Game")
     void findGameNormal() {
-        try {
-            gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(2, null, null, "New Game 2", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(3, null, null, "New Game 3", new ChessGame())
-            );
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        createThreeGames();
 
         try {
             GameData game = gameDAODB.findGame(2);
@@ -106,31 +82,22 @@ public class GameDAOTests {
     @Order(4)
     @DisplayName("Normal Clear")
     void clearNormal() {
-        try {
-            gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(2, null, null, "New Game 2", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(3, null, null, "New Game 3", new ChessGame())
-            );
-        } catch (DataAccessException exception) {
-            fail();
-        }
-
-        try {
-            gameDAODB.clear();
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        createThreeGames();
+        clear();
 
         try {
             gameDAODB.findGame(1);
             fail();
         } catch (DataAccessException exception) {
             // success
+        }
+    }
+
+    private void clear() {
+        try {
+            gameDAODB.clear();
+        } catch (DataAccessException exception) {
+            fail();
         }
     }
 
@@ -162,19 +129,7 @@ public class GameDAOTests {
     @Order(6)
     @DisplayName("Bad Request Games")
     void requestGamesBad() {
-        try {
-            gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(2, null, null, "New Game 2", new ChessGame())
-            );
-            gameDAODB.createGame(
-                    new GameData(3, null, null, "New Game 3", new ChessGame())
-            );
-        } catch (DataAccessException exception) {
-            fail();
-        }
+        createThreeGames();
 
         try {
             HashSet<GameData> games = gameDAODB.requestGames();
@@ -189,6 +144,22 @@ public class GameDAOTests {
             if (!games.isEmpty()) {
                 fail();
             }
+        } catch (DataAccessException exception) {
+            fail();
+        }
+    }
+
+    private void createThreeGames() {
+        try {
+            gameDAODB.createGame(
+                    new GameData(1, null, null, "New Game", new ChessGame())
+            );
+            gameDAODB.createGame(
+                    new GameData(2, null, null, "New Game 2", new ChessGame())
+            );
+            gameDAODB.createGame(
+                    new GameData(3, null, null, "New Game 3", new ChessGame())
+            );
         } catch (DataAccessException exception) {
             fail();
         }
