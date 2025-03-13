@@ -1,9 +1,11 @@
 package dataaccess;
 
+import exceptions.BadRequestException;
 import model.AuthData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class AuthDAODB implements AuthDAO {
@@ -31,10 +33,51 @@ public class AuthDAODB implements AuthDAO {
 
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM authenticationPairs WHERE authToken=?"
+            )) {
+                statement.setString(1, authToken);
+                try (ResultSet result = statement.executeQuery()) {
+                    if (result.next()) {
+                        return new AuthData(
+                            result.getString("username"),
+                            result.getString("authToken")
+                        );
+                    }
+                } catch (SQLException exception) {
+                    throw new DataAccessException("Unable to execute SQL Query");
+                }
+            } catch (SQLException exception) {
+                throw new DataAccessException("Unable to prepare SQL Statement");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate database connection");
+        }
+
+        throw new DataAccessException("Unknown Data Access Error occurred");
     }
 
     @Override
     public void addAuth(AuthData authData) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO authenticationPairs (username, authToken) VALUES (?,?)"
+            )) {
+                statement.setString(1, authData.username());
+                statement.setString(2, authData.authToken());
+
+                statement.executeUpdate();
+                connection.commit();
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw new DataAccessException("Unable to add AuthData");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate database connection");
+        }
     }
 
     @Override

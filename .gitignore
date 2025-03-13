@@ -11,3 +11,7 @@ out/
 
 ### Chess project ###
 server/**/db.properties
+
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/datasources
