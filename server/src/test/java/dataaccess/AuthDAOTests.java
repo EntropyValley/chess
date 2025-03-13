@@ -2,7 +2,6 @@ package dataaccess;
 
 import model.AuthData;
 import org.junit.jupiter.api.*;
-import service.GameService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,7 +23,7 @@ public class AuthDAOTests {
         try {
             authDAODB.clear();
         } catch (DataAccessException exception) {
-            System.out.println("Error clearing gameDAO or authDAO");
+            System.out.println("Error clearing authDAO");
         }
     }
 
