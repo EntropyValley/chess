@@ -20,8 +20,12 @@ public class UserServiceTests {
 
     @BeforeAll
     static void init() {
-        userDAO = new UserDAOMem();
-        authDAO = new AuthDAOMem();
+        try {
+            userDAO = new UserDAODB();
+            authDAO = new AuthDAODB();
+        } catch (DataAccessException exception) {
+            System.out.println("FAILURE");
+        }
     }
 
     @BeforeEach

@@ -23,8 +23,12 @@ public class GameServiceTests {
 
     @BeforeAll
     static void init() {
-        gameDAO = new GameDAOMem();
-        authDAO = new AuthDAOMem();
+        try {
+            gameDAO = new GameDAODB();
+            authDAO = new AuthDAODB();
+        } catch (DataAccessException exception) {
+            System.out.println("FAILURE");
+        }
     }
 
     @BeforeEach
