@@ -30,9 +30,11 @@ public class GameDAODB implements GameDAO {
                     """
             )) {
                 statement.executeUpdate();
+            } catch (SQLException exception) {
+                throw new DataAccessException("Unable to initiate games table");
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate authenticationPairs table");
+            throw new DataAccessException("Unable to initiate connection to DB");
         }
     }
 
@@ -61,7 +63,7 @@ public class GameDAODB implements GameDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate authenticationPairs table");
+            throw new DataAccessException("Unable to initiate connection to DB");
         }
 
         return requestedGames;
@@ -69,6 +71,32 @@ public class GameDAODB implements GameDAO {
 
     @Override
     public void createGame(GameData game) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement statement = connection.prepareStatement(
+                """
+                    INSERT INTO games
+                    (id, name, white, black, game)
+                    VALUES
+                    (?, ?, ?, ?, ?)
+                """
+            )) {
+                statement.setInt(1, game.gameID());
+                statement.setString(2, game.gameName());
+                statement.setString(3, game.whiteUsername());
+                statement.setString(4, game.blackUsername());
+                statement.setString(5, new Gson().toJson(game.game()));
+
+                statement.executeUpdate();
+                connection.commit();
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw new DataAccessException("Unable to insert game");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate connection to DB");
+        }
     }
 
     @Override
@@ -82,18 +110,41 @@ public class GameDAODB implements GameDAO {
                 try (ResultSet results = statement.executeQuery()) {
                     if (results.next()) {
                        return readDBGame(results);
+                    } else {
+                        throw new DataAccessException("Unable to find game");
                     }
+                } catch (SQLException exception) {
+                    throw new DataAccessException("Unable to execute select query");
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate authenticationPairs table");
+            throw new DataAccessException("Unable to initiate connection to DB");
         }
-
-        throw new DataAccessException("Unknown Data Access Error Occurred");
     }
 
     @Override
     public void updateGame(GameData game) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE games SET name=?, white=?, black=?, game=? WHERE id=?"
+            )) {
+                statement.setString(1, game.gameName());
+                statement.setString(2, game.whiteUsername());
+                statement.setString(3, game.blackUsername());
+                statement.setString(4, new Gson().toJson(game.game()));
+                statement.setInt(5, game.gameID());
+
+                int updateCount = statement.executeUpdate();
+                if (updateCount < 1) {
+                    connection.rollback();
+                    throw new DataAccessException("Could not find Game");
+                }
+                connection.commit();
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate connection to DB");
+        }
     }
 
     @Override
@@ -116,5 +167,16 @@ public class GameDAODB implements GameDAO {
 
     @Override
     public void clear() throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "TRUNCATE TABLE games"
+            )) {
+                statement.executeUpdate();
+            } catch (SQLException exception) {
+                throw new DataAccessException("Unable to clear authenticationPairs table");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to initiate database connection");
+        }
     }
 }
