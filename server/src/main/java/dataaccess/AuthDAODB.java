@@ -43,6 +43,8 @@ public class AuthDAODB implements AuthDAO {
                             result.getString("username"),
                             result.getString("authToken")
                         );
+                    } else {
+                        throw new DataAccessException("Unable to get AuthData");
                     }
                 } catch (SQLException exception) {
                     throw new DataAccessException("Unable to execute SQL Query: " + exception.getMessage());
@@ -53,8 +55,6 @@ public class AuthDAODB implements AuthDAO {
         } catch (SQLException exception) {
             throw new DataAccessException("Unable to initiate database connection: " + exception.getMessage());
         }
-
-        throw new DataAccessException("Unknown Data Access Error occurred");
     }
 
     @Override
