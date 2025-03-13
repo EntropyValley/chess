@@ -160,7 +160,7 @@ public class GameDAODB implements GameDAO {
                 }
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate authenticationPairs table");
+            throw new DataAccessException("Unable to initiate connection to DB");
         }
         return 0;
     }
@@ -173,7 +173,7 @@ public class GameDAODB implements GameDAO {
             )) {
                 statement.executeUpdate();
             } catch (SQLException exception) {
-                throw new DataAccessException("Unable to clear authenticationPairs table");
+                throw new DataAccessException("Unable to clear games table");
             }
         } catch (SQLException exception) {
             throw new DataAccessException("Unable to initiate database connection");
