@@ -14,22 +14,22 @@ public class UserDAODB implements UserDAO {
 
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    """
-                    CREATE TABlE IF NOT EXISTS users (
-                        name varchar(256) NOT NULL,
-                        email varchar(256) DEFAULT NULL,
-                        passHash varchar(256) DEFAULT NULL,
-                        PRIMARY KEY (name),
-                        INDEX(name)
-                    )
-                    """
+                """
+                CREATE TABlE IF NOT EXISTS users (
+                    name varchar(256) NOT NULL,
+                    email varchar(256) NOT NULL,
+                    passHash varchar(256) NOT NULL,
+                    PRIMARY KEY (name),
+                    INDEX(name)
+                )
+                """
             )) {
                 statement.executeUpdate();
             } catch (SQLException exception) {
-                throw new DataAccessException("Unable to initiate users table");
+                throw new DataAccessException("Unable to initiate users table: " + exception.getMessage());
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate connection to DB");
+            throw new DataAccessException("Unable to initiate connection to DB: " + exception.getMessage());
         }
     }
 
@@ -37,7 +37,7 @@ public class UserDAODB implements UserDAO {
     public UserData getUser(String username) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "SELECT (name, email, passHash) FROM users WHERE name = ?"
+                    "SELECT name, email, passHash FROM users WHERE name = ?"
             )) {
                 statement.setString(1, username);
 
@@ -45,17 +45,19 @@ public class UserDAODB implements UserDAO {
                     if (results.next()) {
                         return new UserData(
                                 results.getString("name"),
-                                results.getString("email"),
-                                results.getString("passHash")
+                                results.getString("passHash"),
+                                results.getString("email")
                         );
                     } else {
                         throw new DataAccessException("Unable to find user");
                     }
                 } catch (SQLException exception) {
+                    System.out.println(exception.getMessage());
                     throw new DataAccessException("Unable to execute select query");
                 }
             }
         } catch (SQLException exception) {
+            System.out.println(exception.getMessage());
             throw new DataAccessException("Unable to initiate connection to DB");
         }
     }
@@ -77,7 +79,7 @@ public class UserDAODB implements UserDAO {
             )) {
                 statement.setString(1, userData.username());
                 statement.setString(2, userData.email());
-                statement.setString(2, hashedPass);
+                statement.setString(3, hashedPass);
 
                 statement.executeUpdate();
                 connection.commit();
@@ -93,6 +95,7 @@ public class UserDAODB implements UserDAO {
     @Override
     public boolean validateUser(String username, String password) throws DataAccessException {
         UserData user = getUser(username);
+        System.out.println(user.password());
         return BCrypt.checkpw(password, user.password());
     }
 

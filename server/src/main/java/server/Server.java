@@ -17,9 +17,32 @@ public class Server {
     private final GameHandler gameHandler;
 
     public Server() {
-        UserDAO userDAO = new UserDAOMem();
-        AuthDAO authDAO = new AuthDAOMem();
-        GameDAO gameDAO = new GameDAOMem();
+        UserDAO userDAO;
+
+        try {
+            userDAO = new UserDAODB();
+        } catch (DataAccessException exception) {
+            System.out.println("Could not load User DB DAO, reverting to Mem:\n" + exception.getMessage());
+            userDAO = new UserDAOMem();
+        }
+
+        AuthDAO authDAO;
+
+        try {
+            authDAO = new AuthDAODB();
+        } catch (DataAccessException exception) {
+            System.out.println("Could not load Auth DB DAO, reverting to Mem:\n" + exception.getMessage());
+            authDAO = new AuthDAOMem();
+        }
+
+        GameDAO gameDAO;
+
+        try {
+            gameDAO = new GameDAODB();
+        } catch (DataAccessException exception) {
+            System.out.println("Could not load Game DB DAO, reverting to Mem:\n" + exception.getMessage());
+            gameDAO = new GameDAOMem();
+        }
 
         this.userService = new UserService(userDAO, authDAO);
         this.gameService = new GameService(gameDAO, authDAO);

@@ -26,7 +26,7 @@ public class AuthDAODB implements AuthDAO {
                 statement.executeUpdate();
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate authenticationPairs table");
+            throw new DataAccessException("Unable to initiate authenticationPairs table: " + exception.getMessage());
         }
     }
 
@@ -45,13 +45,13 @@ public class AuthDAODB implements AuthDAO {
                         );
                     }
                 } catch (SQLException exception) {
-                    throw new DataAccessException("Unable to execute SQL Query");
+                    throw new DataAccessException("Unable to execute SQL Query: " + exception.getMessage());
                 }
             } catch (SQLException exception) {
-                throw new DataAccessException("Unable to prepare SQL Statement");
+                throw new DataAccessException("Unable to prepare SQL Statement: " + exception.getMessage());
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate database connection");
+            throw new DataAccessException("Unable to initiate database connection: " + exception.getMessage());
         }
 
         throw new DataAccessException("Unknown Data Access Error occurred");
@@ -72,15 +72,17 @@ public class AuthDAODB implements AuthDAO {
                 connection.commit();
             } catch (SQLException exception) {
                 connection.rollback();
-                throw new DataAccessException("Unable to add AuthData");
+                throw new DataAccessException("Unable to add AuthData: " + exception.getMessage());
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate database connection");
+            throw new DataAccessException("Unable to initiate database connection: " + exception.getMessage());
         }
     }
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
+        getAuth(authToken);
+
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
                 "DELETE FROM authenticationPairs WHERE authToken = ?"

@@ -31,10 +31,10 @@ public class GameDAODB implements GameDAO {
             )) {
                 statement.executeUpdate();
             } catch (SQLException exception) {
-                throw new DataAccessException("Unable to initiate games table");
+                throw new DataAccessException("Unable to initiate games table: " + exception.getMessage());
             }
         } catch (SQLException exception) {
-            throw new DataAccessException("Unable to initiate connection to DB");
+            throw new DataAccessException("Unable to initiate connection to DB: " + exception.getMessage());
         }
     }
 
@@ -54,7 +54,7 @@ public class GameDAODB implements GameDAO {
 
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT (id, name, white, black, game) FROM games"
+                "SELECT id, name, white, black, game FROM games"
             )) {
                 try (ResultSet results = statement.executeQuery()) {
                     while (results.next()) {
@@ -103,7 +103,7 @@ public class GameDAODB implements GameDAO {
     public GameData findGame(int gameID) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT (id, name, white, black, game) FROM games WHERE id = ?"
+                "SELECT id, name, white, black, game FROM games WHERE id = ?"
             )) {
                 statement.setInt(1, gameID);
 
@@ -155,7 +155,7 @@ public class GameDAODB implements GameDAO {
             )) {
                 try (ResultSet results = statement.executeQuery()) {
                     if (results.next()) {
-                        return results.getInt("current_max_id");
+                        return results.getInt("current_max_id") + 1;
                     }
                 }
             }
