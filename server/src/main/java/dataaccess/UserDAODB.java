@@ -95,7 +95,6 @@ public class UserDAODB implements UserDAO {
     @Override
     public boolean validateUser(String username, String password) throws DataAccessException {
         UserData user = getUser(username);
-        System.out.println(user.password());
         return BCrypt.checkpw(password, user.password());
     }
 
