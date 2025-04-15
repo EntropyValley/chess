@@ -2,6 +2,7 @@ package client;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import exceptions.*;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -21,14 +22,17 @@ public class ServerFacade {
         this.urlBase = url;
     }
 
-    private <T> T request(String httpMethod, String endpoint, Object request, Class<T> responseClass, AuthData authData) throws ResponseException {
+    private <T> T request(String httpMethod, String endpoint, Object request, Class<T> responseClass, AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+       String error = null;
+       int errorCode;
+
         try {
             URL url = new URI(urlBase + "/" + endpoint).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(httpMethod);
             connection.setDoOutput(true);
 
-            if (authData != null && authData.authToken() != null) {
+            if (authData != null) {
                 connection.setRequestProperty("authorization", authData.authToken());
             }
 
@@ -41,7 +45,8 @@ public class ServerFacade {
 
             connection.connect();
             int statusCode = connection.getResponseCode();
-            if (statusCode / 100 != 2) {
+
+            if ((int) (statusCode / 100) != 2) {
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
                 String line;
                 StringBuilder errorBody = new StringBuilder();
@@ -51,52 +56,64 @@ public class ServerFacade {
                 }
                 errorReader.close();
 
-                throw new ResponseException(statusCode, errorBody.toString());
-            }
+                record ErrorRecord(String error) {}
 
-            BufferedReader successReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line;
-            StringBuilder successBody = new StringBuilder();
-
-            while ((line = successReader.readLine()) != null) {
-                successBody.append(line);
-            }
-            successReader.close();
-
-            if (responseClass != null) {
-                return new Gson().fromJson(successBody.toString(), responseClass);
+                ErrorRecord errorRecord = new Gson().fromJson(errorBody.toString(), ErrorRecord.class);
+                error = errorRecord.error();
+                errorCode = statusCode;
             } else {
-                return null;
+                BufferedReader successReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line;
+                StringBuilder successBody = new StringBuilder();
+
+                while ((line = successReader.readLine()) != null) {
+                    successBody.append(line);
+                }
+                successReader.close();
+
+                if (responseClass != null) {
+                    return new Gson().fromJson(successBody.toString(), responseClass);
+                } else {
+                    return null;
+                }
             }
+        } catch (java.io.IOException exception) {
+            throw new ConnectionException("Unable to Connect");
         } catch (Exception exception) {
-            throw new ResponseException(-1, exception.getMessage());
+            throw new ResponseException(exception.getMessage());
+        }
+
+        if (error != null) {
+            switch (error) {
+                case "Error: bad request":
+                    throw new BadRequestException(String.format("Code: %d", errorCode));
+                case "Error: game not found":
+                    throw new GameNotFoundException(String.format("Code: %d", errorCode));
+                case "Error: already taken":
+                    throw new GenericTakenException(String.format("Code: %d", errorCode));
+                case "Error: unauthorized":
+                    throw new UnauthorizedException(String.format("Code: %d", errorCode));
+                default:
+                    throw new ResponseException(String.format("Code: %d", errorCode));
+            }
+        } else {
+            throw new ResponseException("Unknown Error");
         }
     }
 
-    public void clear() throws ResponseException {
+    public void clear() throws BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         this.request("DELETE", "/db", null, null, null);
     }
 
-    public boolean register(UserData userData) throws ResponseException {
-        try {
-            this.request("POST", "/user", userData, AuthData.class, null);
-            return true;
-        } catch (Exception exception) {
-            System.out.println("User " + userData.username() + " already exists");
-            return false;
-        }
+    public AuthData register(UserData userData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+        return this.request("POST", "/user", userData, AuthData.class, null);
     }
 
-    public AuthData login(UserData userData) throws ResponseException {
-        try {
-            return this.request("POST", "/session", userData, AuthData.class, null);
-        } catch (Exception exception) {
-            System.out.println("Could not login user " + userData.username());
-            return null;
-        }
+    public AuthData login(UserData userData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+        return this.request("POST", "/session", userData, AuthData.class, null);
     }
 
-    public void logout(AuthData authData) throws ResponseException {
+    public void logout(AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         try {
             this.request("DELETE", "/session", null, null, authData);
         } catch (Exception exception) {
@@ -104,7 +121,7 @@ public class ServerFacade {
         }
     }
 
-    public GameData[] listGames(AuthData authData) throws ResponseException {
+    public GameData[] listGames(AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         record Games(GameData[] games) {}
         try {
             var response = this.request("GET", "/game", null, Games.class, authData);
@@ -119,7 +136,7 @@ public class ServerFacade {
         }
     }
 
-    public boolean createGame(AuthData authData, String gameName) throws ResponseException {
+    public boolean createGame(AuthData authData, String gameName) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         JsonObject request = new JsonObject();
         request.addProperty("gameName", gameName);
 
@@ -132,7 +149,7 @@ public class ServerFacade {
         }
     }
 
-    public boolean joinGame(AuthData authData, int id, String color) throws ResponseException {
+    public boolean joinGame(AuthData authData, int id, String color) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         JsonObject request = new JsonObject();
         request.addProperty("gameID", id);
         request.addProperty("playerColor", color);

@@ -1,15 +1,19 @@
-import chess.*;
 import client.ServerFacade;
+import exceptions.*;
+import model.AuthData;
+import model.UserData;
 
 import java.util.Scanner;
 import java.util.Arrays;
 
-import static ui.EscapeSequences.ERASE_SCREEN;
+import static ui.EscapeSequences.*;
 
 public class Main {
     public static void main(String[] args) {
         boolean loggedIn = false;
-        String currentUser = null;
+        AuthData currentAuth = null;
+
+
         Scanner scanner = new Scanner(System.in);
         ServerFacade facade = new ServerFacade("http://localhost:8080");
 
@@ -17,7 +21,7 @@ public class Main {
         System.out.println("👑 Welcome to 240 Chess. Type help to get started. 👑\n");
 
         while (true) {
-            System.out.print((loggedIn ? "[" + currentUser + "] " : "[LOGGED_OUT]") + " >>> ");
+            System.out.print((loggedIn ? "[" + currentAuth.username() + "] " : "[LOGGED_OUT]") + " >>> ");
 
             // Get user input
             String line = scanner.nextLine();
@@ -37,9 +41,96 @@ public class Main {
                         System.out.println("↪  quit");
                         break;
                     case "register":
+                        if (cmd_args.length != 3) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  `register` requires 3 arguments: <USERNAME> <PASSWORD> <EMAIL>" +
+                                RESET_TEXT_COLOR
+                            );
+                            break;
+                        }
 
+                        try {
+                            UserData userData = new UserData(cmd_args[0], cmd_args[1], cmd_args[2]);
+                            currentAuth = facade.register(userData);
+                            if (currentAuth != null) {
+                                System.out.println(
+                                    SET_TEXT_COLOR_GREEN +
+                                    "↪  Successfully registered and logged in" +
+                                    RESET_TEXT_COLOR
+                                );
+                            }
+                        } catch (ConnectionException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to connect to the server" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (BadRequestException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to register and login: malformed request" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (GenericTakenException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to register and login: username already taken" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (Exception exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to register and login: (" + exception.getClass() + ") " + exception.getMessage() +
+                                RESET_TEXT_COLOR
+                            );
+                        }
                         break;
                     case "login":
+                        if (cmd_args.length != 2) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  `register` requires 2 arguments: <USERNAME> <PASSWORD>" +
+                                RESET_TEXT_COLOR
+                            );
+                            break;
+                        }
+
+                        try {
+                            UserData userData = new UserData(cmd_args[0], cmd_args[1], null);
+                            currentAuth = facade.login(userData);
+                            if (currentAuth != null) {
+                                System.out.println(
+                                    SET_TEXT_COLOR_GREEN +
+                                    "↪  Successfully logged in" +
+                                    RESET_TEXT_COLOR
+                                );
+                            }
+                        } catch (ConnectionException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to connect to the server" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (BadRequestException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to login: malformed request" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (UnauthorizedException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to login: invalid username or password" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (Exception exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to login: (" + exception.getClass() + ") " + exception.getMessage() +
+                                RESET_TEXT_COLOR
+                            );
+                        }
                         break;
                     case "quit":
                         System.out.println("↪ Thanks for playing!");

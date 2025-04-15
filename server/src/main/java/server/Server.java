@@ -1,12 +1,10 @@
 package server;
 
-import exceptions.BadRequestException;
-import exceptions.UnauthorizedException;
+import exceptions.*;
 import spark.*;
 
 import dataaccess.*;
 import service.*;
-import exceptions.*;
 
 public class Server {
 

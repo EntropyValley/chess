@@ -1,7 +1,6 @@
 package dataaccess;
 
 import model.AuthData;
-import exceptions.BadRequestException;
 
 public interface AuthDAO {
     AuthData getAuth(String authToken) throws DataAccessException;
