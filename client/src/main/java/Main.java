@@ -21,7 +21,7 @@ public class Main {
         System.out.println("👑 Welcome to 240 Chess. Type help to get started. 👑\n");
 
         while (true) {
-            System.out.print((loggedIn ? "[" + currentAuth.username() + "] " : "[LOGGED_OUT]") + " >>> ");
+            System.out.print((loggedIn ? "[User: " + currentAuth.username() + "] " : "[LOGGED_OUT]") + " >>> ");
 
             // Get user input
             String line = scanner.nextLine();
@@ -34,19 +34,14 @@ public class Main {
             if (!loggedIn) {
                 switch (cmd_name) {
                     case "help":
-                        System.out.println("↪ AVAILABLE COMMANDS:");
-                        System.out.println("↪  register <USERNAME> <PASSWORD> <EMAIL>");
-                        System.out.println("↪  login <USERNAME> <PASSWORD>");
-                        System.out.println("↪  help");
-                        System.out.println("↪  quit");
+                        genericOutput("↪ AVAILABLE COMMANDS:");
+                        genericOutput("↪  register <USERNAME> <PASSWORD> <EMAIL>");
+                        genericOutput("↪  login <USERNAME> <PASSWORD>");
+                        genericOutput("↪  help");
+                        genericOutput("↪  quit");
                         break;
                     case "register":
-                        if (cmd_args.length != 3) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  `register` requires 3 arguments: <USERNAME> <PASSWORD> <EMAIL>" +
-                                RESET_TEXT_COLOR
-                            );
+                        if (forceNArgs(cmd_args, 3, "register", "<USERNAME> <PASSWORD> <EMAIL>")) {
                             break;
                         }
 
@@ -55,45 +50,20 @@ public class Main {
                             currentAuth = facade.register(userData);
                             if (currentAuth != null) {
                                 loggedIn = true;
-                                System.out.println(
-                                    SET_TEXT_COLOR_GREEN +
-                                    "↪  Successfully registered and logged in" +
-                                    RESET_TEXT_COLOR
-                                );
+                                successOutput("↪  Successfully registered and logged in");
                             }
                         } catch (ConnectionException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to connect to the server" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to connect to the server");
                         } catch (BadRequestException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: malformed request" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to login: malformed request");
                         } catch (GenericTakenException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: username already taken" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to register and login: username already taken");
                         } catch (Exception exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: unknown error" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to login: unknown error");
                         }
                         break;
                     case "login":
-                        if (cmd_args.length != 2) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  `register` requires 2 arguments: <USERNAME> <PASSWORD>" +
-                                RESET_TEXT_COLOR
-                            );
+                        if (forceNArgs(cmd_args, 2, "login", "<USERNAME> <PASSWORD>")) {
                             break;
                         }
 
@@ -102,55 +72,35 @@ public class Main {
                             currentAuth = facade.login(userData);
                             if (currentAuth != null) {
                                 loggedIn = true;
-                                System.out.println(
-                                    SET_TEXT_COLOR_GREEN +
-                                    "↪  Successfully logged in" +
-                                    RESET_TEXT_COLOR
-                                );
+                                successOutput("↪  Successfully logged in");
                             }
                         } catch (ConnectionException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to connect to the server" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to connect to the server");
                         } catch (BadRequestException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to login: malformed request" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to login: malformed request");
                         } catch (UnauthorizedException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to login: invalid username or password" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to login: invalid username or password");
                         } catch (Exception exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to login: unknown error" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to login: unknown error");
                         }
                         break;
                     case "quit":
-                        System.out.println("↪ Thanks for playing!");
+                        successOutput("↪ Thanks for playing!");
                         return;
                     default:
-                        System.out.println("↪ Invalid Command!");
+                        failureOutput("↪ Invalid Command!");
                 }
             } else {
                 switch (cmd_name) {
                     case "help":
-                        System.out.println("↪ AVAILABLE COMMANDS:");
-                        System.out.println("↪  create <NAME> - Create a game");
-                        System.out.println("↪  list - Get a list of games");
-                        System.out.println("↪  join <id> [WHITE|BLACK] - Play a game");
-                        System.out.println("↪  observe <id> - Observe a game");
-                        System.out.println("↪  logout");
-                        System.out.println("↪  help");
-                        System.out.println("↪  quit");
+                        genericOutput("↪ AVAILABLE COMMANDS:");
+                        genericOutput("↪  create <NAME> - Create a game");
+                        genericOutput("↪  list - Get a list of games");
+                        genericOutput("↪  join <id> [WHITE|BLACK] - Play a game");
+                        genericOutput("↪  observe <id> - Observe a game");
+                        genericOutput("↪  logout");
+                        genericOutput("↪  help");
+                        genericOutput("↪  quit");
                         break;
                     case "create":
                         break;
@@ -161,12 +111,7 @@ public class Main {
                     case "observe":
                         break;
                     case "logout":
-                        if (cmd_args.length != 0) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  `register` requires no arguments" +
-                                RESET_TEXT_COLOR
-                            );
+                        if (forceNArgs(cmd_args, 0, "logout", "")) {
                             break;
                         }
 
@@ -174,38 +119,43 @@ public class Main {
                             facade.logout(currentAuth);
                             currentAuth = null;
                             loggedIn = false;
-                            System.out.println(
-                                SET_TEXT_COLOR_GREEN +
-                                "↪  Successfully logged out" +
-                                RESET_TEXT_COLOR
-                            );
+                            successOutput("↪  Successfully logged out");
                         } catch (ConnectionException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to connect to the server" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to connect to the server");
                         } catch (UnauthorizedException exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: unauthorized" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to register and login: unauthorized");
                         } catch (Exception exception) {
-                            System.out.println(
-                                SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: unknown error" +
-                                RESET_TEXT_COLOR
-                            );
+                            failureOutput("↪  Failed to register and login: unknown error");
                         }
                         break;
                     case "quit":
-                        System.out.println("↪ Thanks for playing!");
+                        successOutput("↪ Thanks for playing!");
                         return;
                     default:
-                        System.out.println("↪ Invalid Command!");
+                        failureOutput("↪ Invalid Command!");
                 }
             }
         }
+    }
+
+    static void successOutput(String output) {
+        System.out.println(SET_TEXT_COLOR_GREEN + output + RESET_TEXT_COLOR);
+    }
+
+    static void failureOutput(String output) {
+        System.out.println(SET_TEXT_COLOR_RED + output + RESET_TEXT_COLOR);
+    }
+
+    static void genericOutput(String output) {
+        System.out.println(output);
+    }
+
+    static boolean forceNArgs(String[] args, int count, String command, String argsDefinition) {
+        if (args.length != count) {
+            String delimiter = count > 0 ? ": " : "";
+            failureOutput("↪  `" + command + "` requires " + count + " arguments" + delimiter + argsDefinition);
+            return true; // break
+        }
+        return false; // continue
     }
 }
