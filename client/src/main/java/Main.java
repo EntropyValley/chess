@@ -337,7 +337,13 @@ public class Main {
                     bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
                 }
 
-                ChessPiece piece = board.getBoard().getPiece(new ChessPosition(rawNumber, i));
+                ChessPiece piece;
+
+                if (reverse) {
+                    piece = board.getBoard().getPiece(new ChessPosition(rawNumber, 9-i));
+                } else {
+                    piece = board.getBoard().getPiece(new ChessPosition(rawNumber, i));
+                }
 
                 if (piece != null) {
                     String textColor = piece.getTeamColor() == ChessGame.TeamColor.BLACK ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_GREEN;
