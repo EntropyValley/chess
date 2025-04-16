@@ -35,11 +35,11 @@ public class Main {
 
             // Get user input
             String line = scanner.nextLine();
-            String[] split_line = line.split(" ");
+            String[] splitLine = line.split(" ");
 
             // Create command values
-            String cmdName = split_line[0].toLowerCase();
-            String[] cmdArgs = Arrays.copyOfRange(split_line, 1, split_line.length);
+            String cmdName = splitLine[0].toLowerCase();
+            String[] cmdArgs = Arrays.copyOfRange(splitLine, 1, splitLine.length);
 
             switch (currentState) {
                 case LOGGED_OUT:
@@ -75,28 +75,7 @@ public class Main {
                 genericOutput("↪  quit");
                 break;
             case "create":
-                if (forceNArgs(cmdArgs, 1, "create", "<GAME_NAME>")) {
-                    break;
-                }
-
-                try {
-                    ServerFacade.CreateGameResponse response = facade.createGame(currentAuth, cmdArgs[0]);
-                    if (response != null) {
-                        successOutput("↪  successfully created game!");
-                    } else {
-                        failureOutput("↪  Failed to create game: unknown error");
-                    }
-                } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
-                } catch (BadRequestException exception) {
-                    failureOutput("↪  Failed to create game: malformed request");
-                } catch (GenericTakenException exception) {
-                    failureOutput("↪  Failed to create game: game already taken");
-                } catch (GameNotFoundException exception) {
-                    failureOutput("↪  Failed to create game: game not found");
-                } catch (Exception exception) {
-                    failureOutput("↪  Failed to create game: unknown error");
-                }
+                handleCreateCommand(cmdArgs, facade);
                 break;
             case "list":
                 if (forceNArgs(cmdArgs, 0, "list", "")) {
@@ -172,6 +151,31 @@ public class Main {
         }
 
         return false;
+    }
+
+    private static void handleCreateCommand(String[] cmdArgs, ServerFacade facade) {
+        if (forceNArgs(cmdArgs, 1, "create", "<GAME_NAME>")) {
+            return;
+        }
+
+        try {
+            ServerFacade.CreateGameResponse response = facade.createGame(currentAuth, cmdArgs[0]);
+            if (response != null) {
+                successOutput("↪  successfully created game!");
+            } else {
+                failureOutput("↪  Failed to create game: unknown error");
+            }
+        } catch (ConnectionException exception) {
+            failureOutput("↪  Failed to connect to the server");
+        } catch (BadRequestException exception) {
+            failureOutput("↪  Failed to create game: malformed request");
+        } catch (GenericTakenException exception) {
+            failureOutput("↪  Failed to create game: game already taken");
+        } catch (GameNotFoundException exception) {
+            failureOutput("↪  Failed to create game: game not found");
+        } catch (Exception exception) {
+            failureOutput("↪  Failed to create game: unknown error");
+        }
     }
 
     record PlayerInfo(GameData gameData, ChessGame.TeamColor teamColor) {}
@@ -383,29 +387,15 @@ public class Main {
     }
 
     private static ArrayList<String> generateDefaultNumbersArray() {
-        ArrayList<String> numbers = new ArrayList<>();
-        numbers.add(" 8 ");
-        numbers.add(" 7 ");
-        numbers.add(" 6 ");
-        numbers.add(" 5 ");
-        numbers.add(" 4 ");
-        numbers.add(" 3 ");
-        numbers.add(" 2 ");
-        numbers.add(" 1 ");
-        return numbers;
+        return new ArrayList<>(
+                Arrays.asList(" 8 ", " 7 ", " 6 ", " 5 ", " 4 ", " 3 ", " 2 ", " 1 ")
+        );
     }
 
     private static ArrayList<String> generateDefaultLettersArray() {
-        ArrayList<String> letters = new ArrayList<>();
-        letters.add(" a ");
-        letters.add(" b ");
-        letters.add(" c ");
-        letters.add(" d ");
-        letters.add(" e ");
-        letters.add(" f ");
-        letters.add(" g ");
-        letters.add(" h ");
-        return letters;
+        return new ArrayList<>(
+                Arrays.asList(" a ", " b ", " c ", " d ", " e ", " f ", " g ", " h ")
+        );
     }
 
     private static void sortGameList(List<GameData> gameList) {
@@ -477,7 +467,6 @@ public class Main {
                 failureOutput("↪ Invalid Command!");
                 break;
         }
-
         return false;
     }
 
