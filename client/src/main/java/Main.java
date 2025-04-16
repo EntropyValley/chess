@@ -128,10 +128,10 @@ public class Main {
                 }
                 break;
             case "play":
-                handle_play_command(cmdArgs, facade);
+                handlePlayCommand(cmdArgs, facade);
                 break;
             case "observe":
-                handle_observe_command(cmdArgs, facade);
+                handleObserveCommand(cmdArgs, facade);
                 break;
             case "logout":
                 if (forceNArgs(cmdArgs, 0, "logout", "")) {
@@ -174,18 +174,29 @@ public class Main {
         return false;
     }
 
-    private static void handle_observe_command(String[] cmdArgs, ServerFacade facade) {
+    record PlayerInfo(GameData gameData, ChessGame.TeamColor teamColor) {}
+
+    private static void handleObserveCommand(String[] cmdArgs, ServerFacade facade) {
         if (forceNArgs(cmdArgs, 2, "observe", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
             return;
         }
 
+        PlayerInfo playerInfo = getMatchedGame(cmdArgs, facade);
+        if (playerInfo == null) {
+            return;
+        }
+
+        outputGame(playerInfo.gameData(), playerInfo.teamColor());
+    }
+
+    private static PlayerInfo getMatchedGame(String[] cmdArgs, ServerFacade facade) {
         int observationIndex;
 
         try {
             observationIndex = Integer.parseInt(cmdArgs[0]);
         } catch (NumberFormatException e) {
             failureOutput("↪  <GAME_INDEX> is not a number>");
-            return;
+            return null;
         }
 
         ChessGame.TeamColor observationColor;
@@ -197,7 +208,7 @@ public class Main {
             observationColor = ChessGame.TeamColor.BLACK;
         } else {
             failureOutput("↪  <COLOR> is not WHITE or BLACK");
-            return;
+            return null;
         }
 
         List<GameData> observableGameList;
@@ -209,10 +220,10 @@ public class Main {
             sortGameList(observableGameList);
         } catch (UnauthorizedException exception) {
             failureOutput("↪  Failed to fetch games: unauthorized");
-            return;
+            return null;
         } catch (Exception exception) {
             failureOutput("↪  Failed to fetch games");
-            return;
+            return null;
         }
 
         GameData observedGame;
@@ -221,73 +232,34 @@ public class Main {
             observedGame = observableGameList.get(observationIndex - 1);
         } catch (Exception e) {
             failureOutput("↪  Game " + observationIndex + " not available");
-            return;
+            return null;
         }
 
-        outputGame(observedGame, observationColor);
+        return new PlayerInfo(observedGame, observationColor);
     }
 
-    private static void handle_play_command(String[] cmdArgs, ServerFacade facade) {
+    private static void handlePlayCommand(String[] cmdArgs, ServerFacade facade) {
         if (forceNArgs(cmdArgs, 2, "play", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
             return;
         }
 
-        int index;
+        PlayerInfo playerInfo = getMatchedGame(cmdArgs, facade);
 
-        try {
-            index = Integer.parseInt(cmdArgs[0]);
-        } catch (NumberFormatException e) {
-            failureOutput("↪  <GAME_INDEX> is not a number>");
-            return;
-        }
-
-        ChessGame.TeamColor color;
-        String loweredColorArg = cmdArgs[1].toLowerCase();
-
-        if (loweredColorArg.equals("white")) {
-            color = ChessGame.TeamColor.WHITE;
-        } else if (loweredColorArg.equals("black")) {
-            color = ChessGame.TeamColor.BLACK;
-        } else {
-            failureOutput("↪  <COLOR> is not WHITE or BLACK");
-            return;
-        }
-
-        List<GameData> gameList;
-
-        try {
-            GameData[] games = facade.listGames(currentAuth);
-            gameList = new ArrayList<>(Arrays.asList(games));
-
-            sortGameList(gameList);
-        } catch (UnauthorizedException exception) {
-            failureOutput("↪  Failed to fetch games: unauthorized");
-            return;
-        } catch (Exception exception) {
-            failureOutput("↪  Failed to fetch games");
-            return;
-        }
-
-        GameData game;
-
-        try {
-            game = gameList.get(index - 1);
-        } catch (Exception e) {
-            failureOutput("↪  Game " + index + " not available");
+        if (playerInfo == null) {
             return;
         }
 
         boolean skipJoin = false;
 
-        if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
-            if (!game.whiteUsername().equals(currentAuth.username())) {
+        if (playerInfo.teamColor() == ChessGame.TeamColor.WHITE && playerInfo.gameData().whiteUsername() != null) {
+            if (!playerInfo.gameData().whiteUsername().equals(currentAuth.username())) {
                 failureOutput("↪  Color WHITE not available for this game");
                 return;
             } else {
                 skipJoin = true;
             }
-        } else if (color == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
-            if (!game.blackUsername().equals(currentAuth.username())) {
+        } else if (playerInfo.teamColor() == ChessGame.TeamColor.BLACK && playerInfo.gameData().blackUsername() != null) {
+            if (!playerInfo.gameData().blackUsername().equals(currentAuth.username())) {
                 failureOutput("↪  Color BLACK not available for this game");
                 return;
             } else {
@@ -297,7 +269,7 @@ public class Main {
 
         if (!skipJoin) {
             try {
-                facade.joinGame(currentAuth, game.gameID(), color.toString().toLowerCase());
+                facade.joinGame(currentAuth, playerInfo.gameData().gameID(), playerInfo.teamColor().toString().toLowerCase());
             } catch (ConnectionException exception) {
                 failureOutput("↪  Failed to connect to the server");
                 return;
@@ -318,7 +290,7 @@ public class Main {
             successOutput("↪  Rejoining game...");
         }
 
-        outputGame(game, color);
+        outputGame(playerInfo.gameData(), playerInfo.teamColor());
     }
 
     private static void outputGame(GameData game, ChessGame.TeamColor color) {
@@ -445,8 +417,8 @@ public class Main {
         });
     }
 
-    private static boolean handleLoggedOutCommands(String cmd_name, String[] cmd_args, ServerFacade facade) {
-        switch (cmd_name) {
+    private static boolean handleLoggedOutCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
+        switch (cmdName) {
             case "help":
                 genericOutput("↪ AVAILABLE COMMANDS:");
                 genericOutput("↪  register <USERNAME> <PASSWORD> <EMAIL>");
@@ -455,12 +427,12 @@ public class Main {
                 genericOutput("↪  quit");
                 break;
             case "register":
-                if (forceNArgs(cmd_args, 3, "register", "<USERNAME> <PASSWORD> <EMAIL>")) {
+                if (forceNArgs(cmdArgs, 3, "register", "<USERNAME> <PASSWORD> <EMAIL>")) {
                     break;
                 }
 
                 try {
-                    UserData userData = new UserData(cmd_args[0], cmd_args[1], cmd_args[2]);
+                    UserData userData = new UserData(cmdArgs[0], cmdArgs[1], cmdArgs[2]);
                     currentAuth = facade.register(userData);
                     if (currentAuth != null) {
                         currentState = ClientState.LOGGED_IN;
@@ -477,12 +449,12 @@ public class Main {
                 }
                 break;
             case "login":
-                if (forceNArgs(cmd_args, 2, "login", "<USERNAME> <PASSWORD>")) {
+                if (forceNArgs(cmdArgs, 2, "login", "<USERNAME> <PASSWORD>")) {
                     break;
                 }
 
                 try {
-                    UserData userData = new UserData(cmd_args[0], cmd_args[1], null);
+                    UserData userData = new UserData(cmdArgs[0], cmdArgs[1], null);
                     currentAuth = facade.login(userData);
                     if (currentAuth != null) {
                         currentState = ClientState.LOGGED_IN;
