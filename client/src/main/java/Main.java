@@ -221,6 +221,56 @@ public class Main {
                 outputGame(game, color);
                 break;
             case "observe":
+                if (forceNArgs(cmd_args, 2, "observe", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
+                    break;
+                }
+
+                int observationIndex;
+
+                try {
+                    observationIndex = Integer.parseInt(cmd_args[0]);
+                } catch (NumberFormatException e) {
+                    failureOutput("↪  <GAME_INDEX> is not a number>");
+                    break;
+                }
+
+                ChessGame.TeamColor observationColor;
+                String observationColorArg = cmd_args[1].toLowerCase();
+
+                if (observationColorArg.equals("white")) {
+                    observationColor = ChessGame.TeamColor.WHITE;
+                } else if (observationColorArg.equals("black")) {
+                    observationColor = ChessGame.TeamColor.BLACK;
+                } else {
+                    failureOutput("↪  <COLOR> is not WHITE or BLACK");
+                    break;
+                }
+
+                List<GameData> observableGameList;
+
+                try {
+                    GameData[] games = facade.listGames(currentAuth);
+                    observableGameList = new ArrayList<>(Arrays.asList(games));
+
+                    sortGameList(observableGameList);
+                } catch (UnauthorizedException exception) {
+                    failureOutput("↪  Failed to fetch games: unauthorized");
+                    break;
+                } catch (Exception exception) {
+                    failureOutput("↪  Failed to fetch games");
+                    break;
+                }
+
+                GameData observedGame;
+
+                try {
+                    observedGame = observableGameList.get(observationIndex - 1);
+                } catch (Exception e) {
+                    failureOutput("↪  Game " + observationIndex + " not available");
+                    break;
+                }
+
+                outputGame(observedGame, observationColor);
                 break;
             case "logout":
                 if (forceNArgs(cmd_args, 0, "logout", "")) {
