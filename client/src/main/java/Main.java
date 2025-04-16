@@ -1,6 +1,7 @@
 import client.ServerFacade;
 import exceptions.*;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 
 import java.util.Scanner;
@@ -55,7 +56,7 @@ public class Main {
                         } catch (ConnectionException exception) {
                             failureOutput("↪  Failed to connect to the server");
                         } catch (BadRequestException exception) {
-                            failureOutput("↪  Failed to login: malformed request");
+                            failureOutput("↪  Failed to register and login: malformed request");
                         } catch (GenericTakenException exception) {
                             failureOutput("↪  Failed to register and login: username already taken");
                         } catch (Exception exception) {
@@ -113,14 +114,37 @@ public class Main {
                         } catch (ConnectionException exception) {
                             failureOutput("↪  Failed to connect to the server");
                         } catch (BadRequestException exception) {
-                            failureOutput("↪  Failed to login: malformed request");
-                        } catch (GameNotFoundException exception) {
-                            failureOutput("↪  Failed to login: game not found");
+                            failureOutput("↪  Failed to create game: malformed request");
                         } catch (GenericTakenException exception) {
-                            failureOutput("↪  Failed to login: game already taken");
+                            failureOutput("↪  Failed to create game: game already taken");
+                        } catch (GameNotFoundException exception) {
+                            failureOutput("↪  Failed to create game: game not found");
+                        } catch (Exception exception) {
+                            failureOutput("↪  Failed to create game: unknown error");
                         }
                     case "list":
-                        break;
+                        if (forceNArgs(cmd_args, 0, "list", "")) {
+                            break;
+                        }
+
+                        try {
+                            GameData[] games = facade.listGames(currentAuth);
+                            for (GameData gameData : games) {
+                                String white = gameData.whiteUsername() != null ? gameData.whiteUsername() : "[OPEN]";
+                                String black = gameData.blackUsername() != null ? gameData.blackUsername() : "[OPEN]";
+                                successOutput(
+                                    "↪  Game " + gameData.gameID() + " (" + gameData.gameName() + "): " +
+                                    SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + white + RESET_BG_COLOR + SET_TEXT_COLOR_GREEN + " (white), " +
+                                    SET_BG_COLOR_WHITE + SET_TEXT_COLOR_BLACK + black + RESET_BG_COLOR + SET_TEXT_COLOR_GREEN + " (black)"
+                                );
+                            }
+                        } catch (ConnectionException exception) {
+                            failureOutput("↪  Failed to connect to the server");
+                        } catch (UnauthorizedException exception) {
+                            failureOutput("↪  Failed to list games: unauthorized");
+                        } catch (GenericTakenException | GameNotFoundException | BadRequestException e) {
+                            failureOutput("↪  Failed to list games: unknown error");
+                        }
                     case "join":
                         break;
                     case "observe":
@@ -138,9 +162,9 @@ public class Main {
                         } catch (ConnectionException exception) {
                             failureOutput("↪  Failed to connect to the server");
                         } catch (UnauthorizedException exception) {
-                            failureOutput("↪  Failed to register and login: unauthorized");
+                            failureOutput("↪  Failed to logout: unauthorized");
                         } catch (Exception exception) {
-                            failureOutput("↪  Failed to register and login: unknown error");
+                            failureOutput("↪  Failed to logout: unknown error");
                         }
                         break;
                     case "quit":
