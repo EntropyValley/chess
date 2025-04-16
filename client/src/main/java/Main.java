@@ -103,7 +103,22 @@ public class Main {
                         genericOutput("↪  quit");
                         break;
                     case "create":
-                        break;
+                        if (forceNArgs(cmd_args, 1, "create", "<GAME_NAME>")) {
+                            break;
+                        }
+
+                        try {
+                            ServerFacade.createGameResponse response = facade.createGame(currentAuth, cmd_args[0]);
+                            successOutput("↪  successfully created game with id " + response.gameID() + "!");
+                        } catch (ConnectionException exception) {
+                            failureOutput("↪  Failed to connect to the server");
+                        } catch (BadRequestException exception) {
+                            failureOutput("↪  Failed to login: malformed request");
+                        } catch (GameNotFoundException exception) {
+                            failureOutput("↪  Failed to login: game not found");
+                        } catch (GenericTakenException exception) {
+                            failureOutput("↪  Failed to login: game already taken");
+                        }
                     case "list":
                         break;
                     case "join":
