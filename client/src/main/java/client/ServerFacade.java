@@ -21,7 +21,8 @@ public class ServerFacade {
         this.urlBase = url;
     }
 
-    private <T> T request(String httpMethod, String endpoint, Object request, Class<T> responseClass, AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    private <T> T request(String httpMethod, String endpoint, Object request, Class<T> responseClass, AuthData authData)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
        String error;
        int errorCode;
 
@@ -100,23 +101,28 @@ public class ServerFacade {
         }
     }
 
-    public void clear() throws BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    public void clear()
+        throws BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         this.request("DELETE", "/db", null, null, null);
     }
 
-    public AuthData register(UserData userData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    public AuthData register(UserData userData)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         return this.request("POST", "/user", userData, AuthData.class, null);
     }
 
-    public AuthData login(UserData userData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    public AuthData login(UserData userData)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         return this.request("POST", "/session", userData, AuthData.class, null);
     }
 
-    public void logout(AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    public void logout(AuthData authData)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         this.request("DELETE", "/session", null, null, authData);
     }
 
-    public GameData[] listGames(AuthData authData) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+    public GameData[] listGames(AuthData authData)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         record Games(GameData[] games) {}
         var response = this.request("GET", "/game", null, Games.class, authData);
         if (response != null) {
@@ -125,17 +131,19 @@ public class ServerFacade {
         return null;
     }
 
-    public record createGameResponse(int gameID) {}
+    public record CreateGameResponse(int gameID) {}
 
-    public createGameResponse createGame(AuthData authData, String gameName) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
-        record request(String gameName) {}
+    public CreateGameResponse createGame(AuthData authData, String gameName)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+        record Request(String gameName) {}
 
-        return this.request("POST", "/game", new request(gameName), createGameResponse.class, authData);
+        return this.request("POST", "/game", new Request(gameName), CreateGameResponse.class, authData);
     }
 
-    public void joinGame(AuthData authData, int id, String color) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
-        record request(String playerColor, int gameID) {}
+    public void joinGame(AuthData authData, int id, String color)
+        throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
+        record Request(String playerColor, int gameID) {}
 
-        this.request("PUT", "/game", new request(color.toUpperCase(), id), null, authData);
+        this.request("PUT", "/game", new Request(color.toUpperCase(), id), null, authData);
     }
 }

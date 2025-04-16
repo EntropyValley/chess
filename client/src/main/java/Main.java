@@ -38,17 +38,17 @@ public class Main {
             String[] split_line = line.split(" ");
 
             // Create command values
-            String cmd_name = split_line[0].toLowerCase();
-            String[] cmd_args = Arrays.copyOfRange(split_line, 1, split_line.length);
+            String cmdName = split_line[0].toLowerCase();
+            String[] cmdArgs = Arrays.copyOfRange(split_line, 1, split_line.length);
 
             switch (currentState) {
                 case LOGGED_OUT:
-                    if (handleLoggedOutCommands(cmd_name, cmd_args, facade)) {
+                    if (handleLoggedOutCommands(cmdName, cmdArgs, facade)) {
                         return;
                     }
                     break;
                 case LOGGED_IN:
-                    if (handleLoggedInCommands(cmd_name, cmd_args, facade)) {
+                    if (handleLoggedInCommands(cmdName, cmdArgs, facade)) {
                         return;
                     }
                     break;
@@ -62,8 +62,8 @@ public class Main {
         }
     }
 
-    private static boolean handleLoggedInCommands(String cmd_name, String[] cmd_args, ServerFacade facade) {
-        switch (cmd_name) {
+    private static boolean handleLoggedInCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
+        switch (cmdName) {
             case "help":
                 genericOutput("↪ AVAILABLE COMMANDS:");
                 genericOutput("↪  create <NAME> - Create a game");
@@ -75,12 +75,12 @@ public class Main {
                 genericOutput("↪  quit");
                 break;
             case "create":
-                if (forceNArgs(cmd_args, 1, "create", "<GAME_NAME>")) {
+                if (forceNArgs(cmdArgs, 1, "create", "<GAME_NAME>")) {
                     break;
                 }
 
                 try {
-                    ServerFacade.createGameResponse response = facade.createGame(currentAuth, cmd_args[0]);
+                    ServerFacade.CreateGameResponse response = facade.createGame(currentAuth, cmdArgs[0]);
                     if (response != null) {
                         successOutput("↪  successfully created game!");
                     } else {
@@ -99,7 +99,7 @@ public class Main {
                 }
                 break;
             case "list":
-                if (forceNArgs(cmd_args, 0, "list", "")) {
+                if (forceNArgs(cmdArgs, 0, "list", "")) {
                     break;
                 }
 
@@ -128,152 +128,13 @@ public class Main {
                 }
                 break;
             case "play":
-                if (forceNArgs(cmd_args, 2, "play", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
-                    break;
-                }
-
-                int index;
-
-                try {
-                    index = Integer.parseInt(cmd_args[0]);
-                } catch (NumberFormatException e) {
-                    failureOutput("↪  <GAME_INDEX> is not a number>");
-                    break;
-                }
-
-                ChessGame.TeamColor color;
-                String loweredColorArg = cmd_args[1].toLowerCase();
-
-                if (loweredColorArg.equals("white")) {
-                    color = ChessGame.TeamColor.WHITE;
-                } else if (loweredColorArg.equals("black")) {
-                    color = ChessGame.TeamColor.BLACK;
-                } else {
-                    failureOutput("↪  <COLOR> is not WHITE or BLACK");
-                    break;
-                }
-
-                List<GameData> gameList;
-
-                try {
-                    GameData[] games = facade.listGames(currentAuth);
-                    gameList = new ArrayList<>(Arrays.asList(games));
-
-                    sortGameList(gameList);
-                } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to fetch games: unauthorized");
-                    break;
-                } catch (Exception exception) {
-                    failureOutput("↪  Failed to fetch games");
-                    break;
-                }
-
-                GameData game;
-
-                try {
-                    game = gameList.get(index - 1);
-                } catch (Exception e) {
-                    failureOutput("↪  Game " + index + " not available");
-                    break;
-                }
-
-                boolean skipJoin = false;
-
-                if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
-                    if (!game.whiteUsername().equals(currentAuth.username())) {
-                        failureOutput("↪  Color WHITE not available for this game");
-                        break;
-                    } else {
-                        skipJoin = true;
-                    }
-                } else if (color == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
-                    if (!game.blackUsername().equals(currentAuth.username())) {
-                        failureOutput("↪  Color BLACK not available for this game");
-                        break;
-                    } else {
-                        skipJoin = true;
-                    }
-                }
-
-                if (!skipJoin) {
-                    try {
-                        facade.joinGame(currentAuth, game.gameID(), color.toString().toLowerCase());
-                    } catch (ConnectionException exception) {
-                        failureOutput("↪  Failed to connect to the server");
-                        break;
-                    } catch (BadRequestException exception) {
-                        failureOutput("↪  Failed to join game: malformed request");
-                        break;
-                    } catch (UnauthorizedException exception) {
-                        failureOutput("↪  Failed to join game: unauthorized");
-                        break;
-                    } catch (GenericTakenException exception) {
-                        failureOutput("↪  Failed to join game: color already taken");
-                        break;
-                    } catch (GameNotFoundException exception) {
-                        failureOutput("↪  Failed to join game: game not found");
-                        break;
-                    }
-                } else {
-                    successOutput("↪  Rejoining game...");
-                }
-
-                outputGame(game, color);
+                handle_play_command(cmdArgs, facade);
                 break;
             case "observe":
-                if (forceNArgs(cmd_args, 2, "observe", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
-                    break;
-                }
-
-                int observationIndex;
-
-                try {
-                    observationIndex = Integer.parseInt(cmd_args[0]);
-                } catch (NumberFormatException e) {
-                    failureOutput("↪  <GAME_INDEX> is not a number>");
-                    break;
-                }
-
-                ChessGame.TeamColor observationColor;
-                String observationColorArg = cmd_args[1].toLowerCase();
-
-                if (observationColorArg.equals("white")) {
-                    observationColor = ChessGame.TeamColor.WHITE;
-                } else if (observationColorArg.equals("black")) {
-                    observationColor = ChessGame.TeamColor.BLACK;
-                } else {
-                    failureOutput("↪  <COLOR> is not WHITE or BLACK");
-                    break;
-                }
-
-                List<GameData> observableGameList;
-
-                try {
-                    GameData[] games = facade.listGames(currentAuth);
-                    observableGameList = new ArrayList<>(Arrays.asList(games));
-
-                    sortGameList(observableGameList);
-                } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to fetch games: unauthorized");
-                    break;
-                } catch (Exception exception) {
-                    failureOutput("↪  Failed to fetch games");
-                    break;
-                }
-
-                GameData observedGame;
-
-                try {
-                    observedGame = observableGameList.get(observationIndex - 1);
-                } catch (Exception e) {
-                    failureOutput("↪  Game " + observationIndex + " not available");
-                    break;
-                }
-
-                outputGame(observedGame, observationColor);
+                handle_observe_command(cmdArgs, facade);
                 break;
             case "logout":
-                if (forceNArgs(cmd_args, 0, "logout", "")) {
+                if (forceNArgs(cmdArgs, 0, "logout", "")) {
                     break;
                 }
 
@@ -311,6 +172,153 @@ public class Main {
         }
 
         return false;
+    }
+
+    private static void handle_observe_command(String[] cmdArgs, ServerFacade facade) {
+        if (forceNArgs(cmdArgs, 2, "observe", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
+            return;
+        }
+
+        int observationIndex;
+
+        try {
+            observationIndex = Integer.parseInt(cmdArgs[0]);
+        } catch (NumberFormatException e) {
+            failureOutput("↪  <GAME_INDEX> is not a number>");
+            return;
+        }
+
+        ChessGame.TeamColor observationColor;
+        String observationColorArg = cmdArgs[1].toLowerCase();
+
+        if (observationColorArg.equals("white")) {
+            observationColor = ChessGame.TeamColor.WHITE;
+        } else if (observationColorArg.equals("black")) {
+            observationColor = ChessGame.TeamColor.BLACK;
+        } else {
+            failureOutput("↪  <COLOR> is not WHITE or BLACK");
+            return;
+        }
+
+        List<GameData> observableGameList;
+
+        try {
+            GameData[] games = facade.listGames(currentAuth);
+            observableGameList = new ArrayList<>(Arrays.asList(games));
+
+            sortGameList(observableGameList);
+        } catch (UnauthorizedException exception) {
+            failureOutput("↪  Failed to fetch games: unauthorized");
+            return;
+        } catch (Exception exception) {
+            failureOutput("↪  Failed to fetch games");
+            return;
+        }
+
+        GameData observedGame;
+
+        try {
+            observedGame = observableGameList.get(observationIndex - 1);
+        } catch (Exception e) {
+            failureOutput("↪  Game " + observationIndex + " not available");
+            return;
+        }
+
+        outputGame(observedGame, observationColor);
+    }
+
+    private static void handle_play_command(String[] cmdArgs, ServerFacade facade) {
+        if (forceNArgs(cmdArgs, 2, "play", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
+            return;
+        }
+
+        int index;
+
+        try {
+            index = Integer.parseInt(cmdArgs[0]);
+        } catch (NumberFormatException e) {
+            failureOutput("↪  <GAME_INDEX> is not a number>");
+            return;
+        }
+
+        ChessGame.TeamColor color;
+        String loweredColorArg = cmdArgs[1].toLowerCase();
+
+        if (loweredColorArg.equals("white")) {
+            color = ChessGame.TeamColor.WHITE;
+        } else if (loweredColorArg.equals("black")) {
+            color = ChessGame.TeamColor.BLACK;
+        } else {
+            failureOutput("↪  <COLOR> is not WHITE or BLACK");
+            return;
+        }
+
+        List<GameData> gameList;
+
+        try {
+            GameData[] games = facade.listGames(currentAuth);
+            gameList = new ArrayList<>(Arrays.asList(games));
+
+            sortGameList(gameList);
+        } catch (UnauthorizedException exception) {
+            failureOutput("↪  Failed to fetch games: unauthorized");
+            return;
+        } catch (Exception exception) {
+            failureOutput("↪  Failed to fetch games");
+            return;
+        }
+
+        GameData game;
+
+        try {
+            game = gameList.get(index - 1);
+        } catch (Exception e) {
+            failureOutput("↪  Game " + index + " not available");
+            return;
+        }
+
+        boolean skipJoin = false;
+
+        if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
+            if (!game.whiteUsername().equals(currentAuth.username())) {
+                failureOutput("↪  Color WHITE not available for this game");
+                return;
+            } else {
+                skipJoin = true;
+            }
+        } else if (color == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
+            if (!game.blackUsername().equals(currentAuth.username())) {
+                failureOutput("↪  Color BLACK not available for this game");
+                return;
+            } else {
+                skipJoin = true;
+            }
+        }
+
+        if (!skipJoin) {
+            try {
+                facade.joinGame(currentAuth, game.gameID(), color.toString().toLowerCase());
+            } catch (ConnectionException exception) {
+                failureOutput("↪  Failed to connect to the server");
+                return;
+            } catch (BadRequestException exception) {
+                failureOutput("↪  Failed to join game: malformed request");
+                return;
+            } catch (UnauthorizedException exception) {
+                failureOutput("↪  Failed to join game: unauthorized");
+                return;
+            } catch (GenericTakenException exception) {
+                failureOutput("↪  Failed to join game: color already taken");
+                return;
+            } catch (GameNotFoundException exception) {
+                failureOutput("↪  Failed to join game: game not found");
+                return;
+            }
+        } else {
+            successOutput("↪  Rejoining game...");
+        }
+
+        outputGame(game, color);
     }
 
     private static void outputGame(GameData game, ChessGame.TeamColor color) {
