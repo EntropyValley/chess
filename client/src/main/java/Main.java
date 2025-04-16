@@ -15,7 +15,7 @@ public class Main {
 
 
         Scanner scanner = new Scanner(System.in);
-        ServerFacade facade = new ServerFacade("http://localhost:8080");
+        ServerFacade facade = new ServerFacade("http://localhost:8081");
 
         System.out.print(ERASE_SCREEN);
         System.out.println("👑 Welcome to 240 Chess. Type help to get started. 👑\n");
@@ -54,6 +54,7 @@ public class Main {
                             UserData userData = new UserData(cmd_args[0], cmd_args[1], cmd_args[2]);
                             currentAuth = facade.register(userData);
                             if (currentAuth != null) {
+                                loggedIn = true;
                                 System.out.println(
                                     SET_TEXT_COLOR_GREEN +
                                     "↪  Successfully registered and logged in" +
@@ -81,7 +82,7 @@ public class Main {
                         } catch (Exception exception) {
                             System.out.println(
                                 SET_TEXT_COLOR_RED +
-                                "↪  Failed to register and login: (" + exception.getClass() + ") " + exception.getMessage() +
+                                "↪  Failed to register and login: unknown error" +
                                 RESET_TEXT_COLOR
                             );
                         }
@@ -100,6 +101,7 @@ public class Main {
                             UserData userData = new UserData(cmd_args[0], cmd_args[1], null);
                             currentAuth = facade.login(userData);
                             if (currentAuth != null) {
+                                loggedIn = true;
                                 System.out.println(
                                     SET_TEXT_COLOR_GREEN +
                                     "↪  Successfully logged in" +
@@ -127,7 +129,7 @@ public class Main {
                         } catch (Exception exception) {
                             System.out.println(
                                 SET_TEXT_COLOR_RED +
-                                "↪  Failed to login: (" + exception.getClass() + ") " + exception.getMessage() +
+                                "↪  Failed to login: unknown error" +
                                 RESET_TEXT_COLOR
                             );
                         }
@@ -159,6 +161,43 @@ public class Main {
                     case "observe":
                         break;
                     case "logout":
+                        if (cmd_args.length != 0) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  `register` requires no arguments" +
+                                RESET_TEXT_COLOR
+                            );
+                            break;
+                        }
+
+                        try {
+                            facade.logout(currentAuth);
+                            currentAuth = null;
+                            loggedIn = false;
+                            System.out.println(
+                                SET_TEXT_COLOR_GREEN +
+                                "↪  Successfully logged out" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (ConnectionException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to connect to the server" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (UnauthorizedException exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to register and login: unauthorized" +
+                                RESET_TEXT_COLOR
+                            );
+                        } catch (Exception exception) {
+                            System.out.println(
+                                SET_TEXT_COLOR_RED +
+                                "↪  Failed to register and login: unknown error" +
+                                RESET_TEXT_COLOR
+                            );
+                        }
                         break;
                     case "quit":
                         System.out.println("↪ Thanks for playing!");
