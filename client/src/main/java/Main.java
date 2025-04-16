@@ -293,6 +293,18 @@ public class Main {
             case "quit":
                 successOutput("↪ Thanks for playing!");
                 return true;
+            case "deletealldataiunderstandtheconsequencesofthisaction":
+                try {
+                    facade.clear();
+                    currentAuth = null;
+                    currentState = ClientState.LOGGED_OUT;
+                    successOutput("↪  Successfully wiped all traces of society from this server");
+                } catch (ConnectionException exception) {
+                    failureOutput("↪  Failed to connect to the server");
+                } catch (Exception exception) {
+                    failureOutput("↪  Failed to completely erase all data from the server");
+                }
+                break;
             default:
                 failureOutput("↪ Invalid Command!");
                 break;
