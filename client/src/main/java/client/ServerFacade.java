@@ -1,7 +1,6 @@
 package client;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import exceptions.*;
 import model.AuthData;
 import model.GameData;
@@ -135,10 +134,8 @@ public class ServerFacade {
     }
 
     public void joinGame(AuthData authData, int id, String color) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
-        JsonObject request = new JsonObject();
-        request.addProperty("gameID", id);
-        request.addProperty("playerColor", color);
+        record request(String playerColor, int gameID) {}
 
-        this.request("PUT", "/game", request, GameData.class, authData);
+        this.request("PUT", "/game", new request(color, id), GameData.class, authData);
     }
 }
