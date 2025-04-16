@@ -56,10 +56,10 @@ public class ServerFacade {
                 }
                 errorReader.close();
 
-                record ErrorRecord(String error) {}
+                record ErrorRecord(String message) {}
 
                 ErrorRecord errorRecord = new Gson().fromJson(errorBody.toString(), ErrorRecord.class);
-                error = errorRecord.error();
+                error = errorRecord.message();
                 errorCode = statusCode;
             } else {
                 BufferedReader successReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
