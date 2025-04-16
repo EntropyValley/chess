@@ -1,4 +1,4 @@
-import chess.ChessGame;
+import chess.*;
 import client.ServerFacade;
 import exceptions.*;
 import model.AuthData;
@@ -15,8 +15,6 @@ public class Main {
     static AuthData currentAuth = null;
 
     public static void main(String[] args) {
-
-
         Scanner scanner = new Scanner(System.in);
         ServerFacade facade = new ServerFacade("http://localhost:8081");
 
@@ -70,7 +68,7 @@ public class Main {
                 genericOutput("↪ AVAILABLE COMMANDS:");
                 genericOutput("↪  create <NAME> - Create a game");
                 genericOutput("↪  list - Get a list of games");
-                genericOutput("↪  join <id> [WHITE|BLACK] - Play a game");
+                genericOutput("↪  play <id> [WHITE|BLACK] - Play a game");
                 genericOutput("↪  observe <id> - Observe a game");
                 genericOutput("↪  logout");
                 genericOutput("↪  help");
@@ -129,8 +127,8 @@ public class Main {
                     failureOutput("↪  Failed to list games: unknown error");
                 }
                 break;
-            case "join":
-                if (forceNArgs(cmd_args, 2, "logout", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
+            case "play":
+                if (forceNArgs(cmd_args, 2, "play", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
                     break;
                 }
 
@@ -179,29 +177,48 @@ public class Main {
                     break;
                 }
 
+                boolean skipJoin = false;
+
                 if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
-                    failureOutput("↪  Color WHITE not available for this game");
-                    break;
+                    if (!game.whiteUsername().equals(currentAuth.username())) {
+                        failureOutput("↪  Color WHITE not available for this game");
+                        break;
+                    } else {
+                        skipJoin = true;
+                    }
                 } else if (color == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
-                    failureOutput("↪  Color BLACK not available for this game");
-                    break;
+                    if (!game.blackUsername().equals(currentAuth.username())) {
+                        failureOutput("↪  Color BLACK not available for this game");
+                        break;
+                    } else {
+                        skipJoin = true;
+                    }
                 }
 
-                try {
-                    facade.joinGame(currentAuth, game.gameID(), color.toString().toLowerCase());
-                } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
-                } catch (BadRequestException exception) {
-                    failureOutput("↪  Failed to join game: malformed request");
-                } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to join game: unauthorized");
-                } catch (GenericTakenException exception) {
-                    failureOutput("↪  Failed to join game: color already taken");
-                } catch (GameNotFoundException exception) {
-                    failureOutput("↪  Failed to join game: game not found");
+                if (!skipJoin) {
+                    try {
+                        facade.joinGame(currentAuth, game.gameID(), color.toString().toLowerCase());
+                    } catch (ConnectionException exception) {
+                        failureOutput("↪  Failed to connect to the server");
+                        break;
+                    } catch (BadRequestException exception) {
+                        failureOutput("↪  Failed to join game: malformed request");
+                        break;
+                    } catch (UnauthorizedException exception) {
+                        failureOutput("↪  Failed to join game: unauthorized");
+                        break;
+                    } catch (GenericTakenException exception) {
+                        failureOutput("↪  Failed to join game: color already taken");
+                        break;
+                    } catch (GameNotFoundException exception) {
+                        failureOutput("↪  Failed to join game: game not found");
+                        break;
+                    }
+                } else {
+                    successOutput("↪  Rejoining game...");
                 }
 
-                printGame(game);
+                outputGame(game, color);
                 break;
             case "observe":
                 break;
@@ -234,8 +251,113 @@ public class Main {
         return false;
     }
 
-    private static void printGame(GameData game) {
+    private static void outputGame(GameData game, ChessGame.TeamColor color) {
+        boolean reverse = color == ChessGame.TeamColor.BLACK;
 
+        ArrayList<String> letters = generateDefaultLettersArray();
+
+        ArrayList<String> numbers = generateDefaultNumbersArray();
+
+        if (reverse) {
+            Collections.reverse(letters);
+            Collections.reverse(numbers);
+        }
+
+        System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
+
+        for (String letter : letters) {
+            System.out.print(letter);
+        }
+
+        System.out.print("   " + RESET_BG_COLOR + "\n");
+
+        ChessGame board = game.game();
+
+        for (String number : numbers) {
+            String trimmedNumber = number.trim();
+            int rawNumber = Integer.parseInt(trimmedNumber);
+
+            System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
+
+            for (int i=1; i<=8; i++) {
+                String bgColor;
+                if (rawNumber%2==0) {
+                    bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
+                } else {
+                    bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
+                }
+
+                ChessPiece piece = board.getBoard().getPiece(new ChessPosition(rawNumber, i));
+
+                if (piece != null) {
+                    String textColor = piece.getTeamColor() == ChessGame.TeamColor.BLACK ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_GREEN;
+
+                    switch(piece.getPieceType()) {
+                        case PAWN:
+                            System.out.print(bgColor + textColor + " P " + RESET_BG_COLOR );
+                            break;
+                        case QUEEN:
+                            System.out.print(bgColor + textColor + " Q " + RESET_BG_COLOR );
+                            break;
+                        case KING:
+                            System.out.print(bgColor + textColor + " K " + RESET_BG_COLOR );
+                            break;
+                        case KNIGHT:
+                            System.out.print(bgColor + textColor + " N " + RESET_BG_COLOR );
+                            break;
+                        case ROOK:
+                            System.out.print(bgColor + textColor + " R " + RESET_BG_COLOR );
+                            break;
+                        case BISHOP:
+                            System.out.print(bgColor + textColor + " B " + RESET_BG_COLOR );
+                            break;
+                        default:
+                            System.out.print(bgColor + textColor + "   " + RESET_BG_COLOR );
+                            break;
+                    }
+                } else {
+                    System.out.print(bgColor + "   " + RESET_BG_COLOR );
+                }
+            }
+
+            System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
+            System.out.print(RESET_BG_COLOR + "\n");
+        }
+
+        System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
+
+        for (String letter : letters) {
+            System.out.print(letter);
+        }
+
+        System.out.print("   " + RESET_BG_COLOR + RESET_TEXT_COLOR + "\n");
+
+    }
+
+    private static ArrayList<String> generateDefaultNumbersArray() {
+        ArrayList<String> numbers = new ArrayList<>();
+        numbers.add(" 8 ");
+        numbers.add(" 7 ");
+        numbers.add(" 6 ");
+        numbers.add(" 5 ");
+        numbers.add(" 4 ");
+        numbers.add(" 3 ");
+        numbers.add(" 2 ");
+        numbers.add(" 1 ");
+        return numbers;
+    }
+
+    private static ArrayList<String> generateDefaultLettersArray() {
+        ArrayList<String> letters = new ArrayList<>();
+        letters.add(" a ");
+        letters.add(" b ");
+        letters.add(" c ");
+        letters.add(" d ");
+        letters.add(" e ");
+        letters.add(" f ");
+        letters.add(" g ");
+        letters.add(" h ");
+        return letters;
     }
 
     private static void sortGameList(List<GameData> gameList) {

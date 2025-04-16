@@ -136,6 +136,6 @@ public class ServerFacade {
     public void joinGame(AuthData authData, int id, String color) throws ResponseException, BadRequestException, GameNotFoundException, GenericTakenException, UnauthorizedException {
         record request(String playerColor, int gameID) {}
 
-        this.request("PUT", "/game", new request(color, id), GameData.class, authData);
+        this.request("PUT", "/game", new request(color.toUpperCase(), id), null, authData);
     }
 }
