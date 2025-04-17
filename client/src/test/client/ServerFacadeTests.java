@@ -17,7 +17,8 @@ public class ServerFacadeTests {
     @BeforeAll
     public static void init() {
         server = new Server();
-        var port = server.run(0);
+        int port;
+        port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
         serverFacade = new ServerFacade("http://localhost:" + port);
     }
@@ -240,6 +241,48 @@ public class ServerFacadeTests {
 
         try {
             serverFacade.joinGame(authData2, response.gameID(), "WHITE");
+            fail();
+        } catch (Exception e) {
+            // success
+        }
+    }
+
+    @Test
+    void clearSuccess() {
+        register1();
+        try {
+            serverFacade.clear();
+        } catch (Exception e) {
+            fail();
+        }
+
+        try {
+            serverFacade.login(new UserData("1", "1", null));
+            fail();
+        } catch (Exception e) {
+            // success
+        }
+    }
+
+    @Test
+    void anotherClearSuccess() {
+        register1();
+        register2();
+        try {
+            serverFacade.clear();
+        } catch (Exception e) {
+            fail();
+        }
+
+        try {
+            serverFacade.login(new UserData("1", "1", null));
+            fail();
+        } catch (Exception e) {
+            // success
+        }
+
+        try {
+            serverFacade.login(new UserData("2", "2", null));
             fail();
         } catch (Exception e) {
             // success
