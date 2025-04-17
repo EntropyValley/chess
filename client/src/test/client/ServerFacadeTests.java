@@ -38,12 +38,7 @@ public class ServerFacadeTests {
 
     @Test
     public void registerSuccess() {
-        try {
-            AuthData authData = serverFacade.register(new UserData("1", "1", "1"));
-            assertNotNull(authData);
-        } catch (Exception e) {
-            fail();
-        }
+        register1();
     }
 
     @Test
@@ -91,12 +86,7 @@ public class ServerFacadeTests {
 
     @Test
     public void logoutSuccess() {
-        AuthData authData = null;
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
@@ -111,12 +101,7 @@ public class ServerFacadeTests {
 
     @Test
     public void logoutFailure() {
-        AuthData authData = null;
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
@@ -138,24 +123,13 @@ public class ServerFacadeTests {
 
     @Test
     public void createGameSuccess() {
-        AuthData authData = null;
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
         }
 
-        ServerFacade.CreateGameResponse response = null;
-
-        try {
-            response = serverFacade.createGame(authData, "Game");
-        } catch (Exception e) {
-            fail();
-        }
+        ServerFacade.CreateGameResponse response = createGame(authData);
 
         if (response == null) {
             fail();
@@ -176,24 +150,13 @@ public class ServerFacadeTests {
 
     @Test
     public void listGamesSuccess() {
-        AuthData authData = null;
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
         }
 
-        ServerFacade.CreateGameResponse response = null;
-
-        try {
-            response = serverFacade.createGame(authData, "Game");
-        } catch (Exception e) {
-            fail();
-        }
+        ServerFacade.CreateGameResponse response = createGame(authData);
 
         if (response == null) {
             fail();
@@ -201,13 +164,7 @@ public class ServerFacadeTests {
 
         assertEquals(1, response.gameID());
 
-        ServerFacade.CreateGameResponse response2 = null;
-
-        try {
-            response2 = serverFacade.createGame(authData, "Game");
-        } catch (Exception e) {
-            fail();
-        }
+        ServerFacade.CreateGameResponse response2 = createGame(authData);
 
         if (response2 == null) {
             fail();
@@ -236,24 +193,13 @@ public class ServerFacadeTests {
 
     @Test
     void joinGameSuccess() {
-        AuthData authData = null;
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
         }
 
-        ServerFacade.CreateGameResponse response = null;
-
-        try {
-            response = serverFacade.createGame(authData, "Game");
-        } catch (Exception e) {
-            fail();
-        }
+        ServerFacade.CreateGameResponse response = createGame(authData);
 
         if (response == null) {
             fail();
@@ -270,25 +216,13 @@ public class ServerFacadeTests {
 
     @Test
     void joinGameFailure() {
-        AuthData authData = null;
-
-        try {
-            authData = serverFacade.register(new UserData("1", "1", "1"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData = register1();
 
         if (authData == null) {
             fail();
         }
 
-        ServerFacade.CreateGameResponse response = null;
-
-        try {
-            response = serverFacade.createGame(authData, "Game");
-        } catch (Exception e) {
-            fail();
-        }
+        ServerFacade.CreateGameResponse response = createGame(authData);
 
         if (response == null) {
             fail();
@@ -302,13 +236,7 @@ public class ServerFacadeTests {
             fail();
         }
 
-        AuthData authData2 = null;
-
-        try {
-            authData2 = serverFacade.register(new UserData("2", "2", "2"));
-        } catch (Exception e) {
-            fail();
-        }
+        AuthData authData2 = register2();
 
         try {
             serverFacade.joinGame(authData2, response.gameID(), "WHITE");
@@ -316,5 +244,36 @@ public class ServerFacadeTests {
         } catch (Exception e) {
             // success
         }
+    }
+
+    private static ServerFacade.CreateGameResponse createGame(AuthData authData) {
+        ServerFacade.CreateGameResponse response = null;
+
+        try {
+            response = serverFacade.createGame(authData, "Game");
+        } catch (Exception e) {
+            fail();
+        }
+        return response;
+    }
+
+    private static AuthData register1() {
+        AuthData authData = null;
+        try {
+            authData = serverFacade.register(new UserData("1", "1", "1"));
+        } catch (Exception e) {
+            fail();
+        }
+        return authData;
+    }
+
+    private static AuthData register2() {
+        AuthData authData = null;
+        try {
+            authData = serverFacade.register(new UserData("2", "2", "2"));
+        } catch (Exception e) {
+            fail();
+        }
+        return authData;
     }
 }
