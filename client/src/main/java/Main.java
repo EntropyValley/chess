@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        ServerFacade facade = new ServerFacade("http://localhost:8081");
+        ServerFacade facade = new ServerFacade("http://localhost:8083");
 
         System.out.print(ERASE_SCREEN);
         System.out.println("👑 Welcome to 240 Chess. Type help to get started. 👑\n");
@@ -52,10 +52,8 @@ public class Main {
                         return;
                     }
                     break;
-                case PLAYING:
-                    break;
-                case OBSERVING:
-                    break;
+                case PLAYING: // Phase 6
+                case OBSERVING: // Phase 6
                 default:
                     break;
             }
@@ -328,9 +326,17 @@ public class Main {
             for (int i=1; i<=8; i++) {
                 String bgColor;
                 if (rawNumber%2==0) {
-                    bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
+                    if (color == ChessGame.TeamColor.WHITE) {
+                        bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
+                    } else {
+                        bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
+                    }
                 } else {
-                    bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
+                    if (color == ChessGame.TeamColor.WHITE) {
+                        bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
+                    } else {
+                        bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
+                    }
                 }
 
                 ChessPiece piece;
