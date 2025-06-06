@@ -9,22 +9,22 @@ import java.util.HashMap;
 import java.io.IOException;
 import java.util.Map;
 
-public class ConnectionManager {
-    public final ConcurrentHashMap<Integer, HashMap<String, Session>> connections = new ConcurrentHashMap<>();
+public class SessionManager {
+    public final ConcurrentHashMap<Integer, HashMap<String, Session>> sessions = new ConcurrentHashMap<>();
 
     public void add(Integer gameID, String username, Session session) {
-        if (!connections.containsKey(gameID)) {
-            connections.put(gameID, new HashMap<>());
+        if (!sessions.containsKey(gameID)) {
+            sessions.put(gameID, new HashMap<>());
         }
-        connections.get(gameID).put(username, session);
+        sessions.get(gameID).put(username, session);
     }
 
     public void remove(String username, Integer gameID) {
-        connections.get(gameID).remove(username);
+        sessions.get(gameID).remove(username);
     }
 
-    public void broadcast(String exclusionUser, ServerMessage message, Integer gameID) throws IOException {
-        HashMap<String, Session> gameConnections = connections.get(gameID);
+    public void broadcast(Integer gameID, String exclusionUser, ServerMessage message) throws IOException {
+        HashMap<String, Session> gameConnections = sessions.get(gameID);
 
         for (Map.Entry<String, Session> entry : gameConnections.entrySet()) {
             if (entry.getValue().isOpen()) {
@@ -37,12 +37,12 @@ public class ConnectionManager {
         }
     }
 
-    public void send(String user, ServerMessage message, Integer gameID) throws IOException {
-        Session userSession = connections.get(gameID).get(user);
+    public void send(Integer gameID, String user, ServerMessage message) throws IOException {
+        Session userSession = sessions.get(gameID).get(user);
         if (userSession.isOpen()) {
             userSession.getRemote().sendString(new Gson().toJson(message));
         } else {
-            connections.get(gameID).remove(user);
+            sessions.get(gameID).remove(user);
         }
     }
 }
