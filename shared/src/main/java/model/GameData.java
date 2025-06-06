@@ -9,8 +9,13 @@ public record GameData(
         String whiteUsername,
         String blackUsername,
         String gameName,
-        ChessGame game
+        ChessGame game,
+        GameStatus status
 ) {
+    public enum GameStatus {
+        STARTING, ENDED
+    }
+
     public GameData {
         Objects.requireNonNull(gameName);
         Objects.requireNonNull(game);

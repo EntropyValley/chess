@@ -24,6 +24,14 @@ public class GameService {
         authDAO.clear();
     }
 
+    public GameData getGame(Integer gameID) throws GameNotFoundException {
+        try {
+           return gameDAO.findGame(gameID);
+        } catch (DataAccessException exception) {
+            throw new GameNotFoundException("Game " + gameID + "cannot be found");
+        }
+    }
+
     public HashSet<GameData> listGames(String authToken) throws UnauthorizedException, DataAccessException {
         try {
             authDAO.getAuth(authToken);
@@ -61,7 +69,10 @@ public class GameService {
         }
 
         try {
-            gameDAO.createGame(new GameData(gameID, null, null, name, new ChessGame()));
+            gameDAO.createGame(
+                new GameData(
+                    gameID, null, null, name, new ChessGame(), GameData.GameStatus.STARTING)
+            );
         } catch (DataAccessException exception) {
             throw new BadRequestException("Unable to create game");
         }
@@ -99,7 +110,9 @@ public class GameService {
         }
 
         try {
-            gameDAO.updateGame(new GameData(gameID, white, black, gameData.gameName(), gameData.game()));
+            gameDAO.updateGame(
+                new GameData(gameID, white, black, gameData.gameName(), gameData.game(), gameData.status())
+            );
         } catch (DataAccessException exception) {
             throw new DataAccessException("Unable to update game");
         }

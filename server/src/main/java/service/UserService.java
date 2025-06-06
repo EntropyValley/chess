@@ -37,6 +37,15 @@ public class UserService {
         return authData;
     }
 
+    public String getUsernameFromToken(String authToken) {
+        try {
+            AuthData foundAuth = authDAO.getAuth(authToken);
+            return foundAuth.username();
+        } catch (DataAccessException exception) {
+            throw new UnauthorizedException("AuthToken not found");
+        }
+    }
+
     public void clear() throws DataAccessException {
         userDAO.clear();
         authDAO.clear();
