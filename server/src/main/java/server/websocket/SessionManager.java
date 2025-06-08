@@ -23,7 +23,7 @@ public class SessionManager {
         sessions.get(gameID).remove(username);
     }
 
-    public void broadcast(Integer gameID, String exclusionUser, ServerMessage message) throws IOException {
+    public void broadcastExcept(Integer gameID, String exclusionUser, ServerMessage message) throws IOException {
         HashMap<String, Session> gameConnections = sessions.get(gameID);
 
         for (Map.Entry<String, Session> entry : gameConnections.entrySet()) {
@@ -31,6 +31,18 @@ public class SessionManager {
                 if (!entry.getKey().equals(exclusionUser)) {
                     entry.getValue().getRemote().sendString(new Gson().toJson(message));
                 }
+            } else {
+                gameConnections.remove(entry.getKey());
+            }
+        }
+    }
+
+    public void broadcastAll(Integer gameID, ServerMessage message) throws IOException {
+        HashMap<String, Session> gameConnections = sessions.get(gameID);
+
+        for (Map.Entry<String, Session> entry : gameConnections.entrySet()) {
+            if (entry.getValue().isOpen()) {
+                entry.getValue().getRemote().sendString(new Gson().toJson(message));
             } else {
                 gameConnections.remove(entry.getKey());
             }
