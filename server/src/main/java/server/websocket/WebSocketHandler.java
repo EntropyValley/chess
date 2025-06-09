@@ -2,6 +2,8 @@ package server.websocket;
 
 import exceptions.GameNotFoundException;
 import exceptions.UnauthorizedException;
+import chess.InvalidMoveException;
+
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.Session;
@@ -9,11 +11,14 @@ import com.google.gson.Gson;
 import java.io.IOException;
 
 import websocket.commands.UserGameCommand;
+import websocket.commands.MakeMoveCommand;
+import websocket.messages.*;
+
 import service.GameService;
 import service.UserService;
-import websocket.messages.*;
+
 import model.GameData;
-import chess.ChessGame;
+import chess.*;
 
 @WebSocket
 public class WebSocketHandler {
@@ -33,7 +38,7 @@ public class WebSocketHandler {
         try {
             switch (command.getCommandType()) {
                 case CONNECT -> onConnect(session, command);
-                case MAKE_MOVE -> System.out.println("MAKE_MOVE");
+                case MAKE_MOVE -> onMakeMove(session, new Gson().fromJson(message, MakeMoveCommand.class));
                 case LEAVE -> System.out.println("LEAVE");
                 case RESIGN -> System.out.println("RESIGN");
                 case null -> System.out.println("Empty Command");
@@ -74,49 +79,121 @@ public class WebSocketHandler {
                     null;
     }
 
-    private void onConnect(Session session, UserGameCommand connectCommand) throws IOException {
+    private record Validation(String username, GameData gameData, boolean isValid) {}
+
+    private Validation validateCommand(Session session, UserGameCommand command) throws IOException {
         String username;
 
         try {
-            username = userService.getUsernameFromToken(connectCommand.getAuthToken());
+            username = userService.getUsernameFromToken(command.getAuthToken());
         } catch (UnauthorizedException exception) {
             session.getRemote().sendString(
                 new Gson().toJson(
                     new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "ERROR: Unauthorized")
                 )
             );
-            return;
+            return new Validation(null, null, false);
         }
 
-        GameData game;
+        GameData gameData;
 
         try {
-            game = gameService.getGame(connectCommand.getGameID());
+            gameData = gameService.getGame(command.getGameID());
         } catch (GameNotFoundException exception) {
             session.getRemote().sendString(
-              new Gson().toJson(
-                  new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "ERROR: Game Not Found")
-              )
+                new Gson().toJson(
+                    new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "ERROR: Game Not Found")
+                )
             );
+            return new Validation(username, null, false);
+        }
+
+        return new Validation(username, gameData, true);
+    }
+
+    private void onConnect(Session session, UserGameCommand connectCommand) throws IOException {
+        Validation validation = validateCommand(session, connectCommand);
+        if (!validation.isValid()) {
             return;
         }
 
-        sessions.add(connectCommand.getGameID(), username, session);
+        sessions.add(connectCommand.getGameID(), validation.username(), session);
 
-        ChessGame.TeamColor color = teamColorFromGame(game, username);
+        ChessGame.TeamColor color = teamColorFromGame(validation.gameData(), validation.username());
 
         if (color == null) {
             broadcastNotification(
-                connectCommand.getGameID(), username,
-                "User " + username + "joined as an observer"
+                connectCommand.getGameID(), validation.username(),
+                "User " + validation.username() + "joined as an observer"
             );
         } else {
             broadcastNotification(
-                connectCommand.getGameID(), username,
-                "Player " + username + " joined as " + color
+                connectCommand.getGameID(), validation.username(),
+                "Player " + validation.username() + " joined as " + color
             );
         }
 
-        sendLoadGame(connectCommand.getGameID(), game);
+        sendLoadGame(connectCommand.getGameID(), validation.gameData());
+    }
+
+    private void onMakeMove(Session session, MakeMoveCommand makeMoveCommand) throws IOException {
+        Validation validation = validateCommand(session, makeMoveCommand);
+        if (!validation.isValid()) {
+            return;
+        }
+
+        ChessGame.TeamColor playerColor = teamColorFromGame(validation.gameData(), validation.username());
+        ChessPosition startingPos = makeMoveCommand.getChessMove().getStartPosition();
+        ChessPosition endingPos = makeMoveCommand.getChessMove().getEndPosition();
+        ChessPiece movedPiece = validation.gameData().game().getBoard().getPiece(startingPos);
+        ChessGame.TeamColor pieceColor = movedPiece.getTeamColor();
+
+        if (playerColor != pieceColor) {
+            sendError(
+                makeMoveCommand.getGameID(),
+                validation.username(),
+                "Cannot move a piece that does not belong to you"
+            );
+        }
+
+        ChessGame newGame = validation.gameData().game();
+        try {
+            newGame.makeMove(makeMoveCommand.getChessMove());
+        } catch (InvalidMoveException exception) {
+            sendError(makeMoveCommand.getGameID(), validation.username(), "Invalid Move");
+            return;
+        }
+
+        GameData newGameData = new GameData(
+            validation.gameData().gameID(),
+            validation.gameData().whiteUsername(),
+            validation.gameData().blackUsername(),
+            validation.gameData().gameName(),
+            newGame,
+            validation.gameData().status()
+        );
+
+        try {
+            // TODO: go back and build a function in the game service to update the game
+        } catch (Exception exception) {
+            sendError(makeMoveCommand.getGameID(), validation.username(), "Unable to Update Game");
+        }
+
+        sendLoadGame(
+            makeMoveCommand.getGameID(),
+            newGameData
+        );
+
+        broadcastNotification(
+            makeMoveCommand.getGameID(),
+            validation.username(),
+            validation.username() + " has moved " + movedPiece.getPieceType() + " from " +
+                startingPos.getRow() + "-" + startingPos.getColumn() + " to " +
+                endingPos.getRow()  + "-" + endingPos.getColumn() + "!"
+        );
+
+        // TODO: Check for game completion
     }
 }
+
+// TODO: Go back and update SQL calls for recently added Game Status
