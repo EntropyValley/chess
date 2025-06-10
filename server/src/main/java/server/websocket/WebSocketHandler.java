@@ -1,5 +1,6 @@
 package server.websocket;
 
+import dataaccess.DataAccessException;
 import exceptions.GameNotFoundException;
 import exceptions.UnauthorizedException;
 import chess.InvalidMoveException;
@@ -59,15 +60,22 @@ public class WebSocketHandler {
 
     private void sendNotification(Integer gameID, String username, String message) throws IOException {
         sessions.send(
-                gameID, username,
-                new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
+            gameID, username,
+            new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
         );
     }
 
     private void broadcastNotification(Integer gameID, String exclusionUsername, String message) throws IOException {
         sessions.broadcastExcept(
-                gameID, exclusionUsername,
-                new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
+            gameID, exclusionUsername,
+            new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
+        );
+    }
+
+    private void notifyAll(Integer gameID, String message) throws IOException {
+        sessions.broadcastAll(
+            gameID,
+            new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
         );
     }
 
@@ -109,6 +117,24 @@ public class WebSocketHandler {
         }
 
         return new Validation(username, gameData, true);
+    }
+
+    private void handleEndOfGame(MakeMoveCommand makeMoveCommand, GameData gameToEnd) {
+        try {
+            gameService.updateGame(
+                makeMoveCommand.getAuthToken(),
+                new GameData(
+                    gameToEnd.gameID(),
+                    gameToEnd.whiteUsername(),
+                    gameToEnd.blackUsername(),
+                    gameToEnd.gameName(),
+                    gameToEnd.game(),
+                    GameData.GameStatus.ENDED
+                )
+            );
+        } catch (DataAccessException exception) {
+            System.out.println("Unable to update Game Status");
+        }
     }
 
     private void onConnect(Session session, UserGameCommand connectCommand) throws IOException {
@@ -174,7 +200,7 @@ public class WebSocketHandler {
         );
 
         try {
-            // TODO: go back and build a function in the game service to update the game
+            gameService.updateGame(makeMoveCommand.getAuthToken(), newGameData);
         } catch (Exception exception) {
             sendError(makeMoveCommand.getGameID(), validation.username(), "Unable to Update Game");
         }
@@ -192,8 +218,53 @@ public class WebSocketHandler {
                 endingPos.getRow()  + "-" + endingPos.getColumn() + "!"
         );
 
-        // TODO: Check for game completion
+        String looserUsername = null;
+        String winnerUsername = null;
+        if (newGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            looserUsername = validation.gameData().blackUsername();
+            winnerUsername = validation.gameData().whiteUsername();
+        } else if (newGame.isInCheckmate(ChessGame.TeamColor.WHITE)) {
+            looserUsername = validation.gameData().whiteUsername();
+            winnerUsername = validation.gameData().blackUsername();
+        }
+
+        if (looserUsername != null || winnerUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                looserUsername + "is in checkmate! " + winnerUsername + "has won!"
+            );
+            handleEndOfGame(makeMoveCommand, newGameData);
+            return;
+        }
+
+        String stalemateUsername = null;
+        if (newGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
+            stalemateUsername = validation.gameData().blackUsername();
+        } else if (newGame.isInStalemate(ChessGame.TeamColor.WHITE)) {
+            stalemateUsername = validation.gameData().whiteUsername();
+        }
+
+        if (stalemateUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                stalemateUsername + "is in stalemate!"
+            );
+            handleEndOfGame(makeMoveCommand, newGameData);
+            return;
+        }
+
+        String checkedUsername = null;
+        if (newGame.isInCheck(ChessGame.TeamColor.BLACK)) {
+            checkedUsername = validation.gameData().blackUsername();
+        } else if (newGame.isInCheck(ChessGame.TeamColor.WHITE)) {
+            checkedUsername = validation.gameData().whiteUsername();
+        }
+
+        if (checkedUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                checkedUsername + "is in check!"
+            );
+        }
     }
 }
-
-// TODO: Go back and update SQL calls for recently added Game Status
