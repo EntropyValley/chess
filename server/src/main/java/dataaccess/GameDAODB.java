@@ -24,6 +24,7 @@ public class GameDAODB implements GameDAO {
                         white varchar(256) DEFAULT NULL,
                         black varchar(256) DEFAULT NULL,
                         game text DEFAULT NULL,
+                        status enum('STARTING', 'ENDED') DEFAULT 'STARTING',
                         PRIMARY KEY (id),
                         INDEX(id)
                     )
@@ -45,7 +46,7 @@ public class GameDAODB implements GameDAO {
         String black = results.getString("black");
         ChessGame game = new Gson().fromJson(results.getString("game"), ChessGame.class);
 
-        return new GameData(id, white, black, name, game);
+        return new GameData(id, white, black, name, game, GameData.GameStatus.STARTING);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class GameDAODB implements GameDAO {
 
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT id, name, white, black, game FROM games"
+                "SELECT id, name, white, black, game, status FROM games"
             )) {
                 try (ResultSet results = statement.executeQuery()) {
                     while (results.next()) {
@@ -77,9 +78,9 @@ public class GameDAODB implements GameDAO {
             try (PreparedStatement statement = connection.prepareStatement(
                 """
                     INSERT INTO games
-                    (id, name, white, black, game)
+                    (id, name, white, black, game, status)
                     VALUES
-                    (?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, ?)
                 """
             )) {
                 statement.setInt(1, game.gameID());
@@ -87,6 +88,7 @@ public class GameDAODB implements GameDAO {
                 statement.setString(3, game.whiteUsername());
                 statement.setString(4, game.blackUsername());
                 statement.setString(5, new Gson().toJson(game.game()));
+                statement.setString(6, "STARTING");
 
                 statement.executeUpdate();
                 connection.commit();
@@ -127,13 +129,14 @@ public class GameDAODB implements GameDAO {
         try (Connection connection = DatabaseManager.getConnection()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(
-                "UPDATE games SET name=?, white=?, black=?, game=? WHERE id=?"
+                "UPDATE games SET name=?, white=?, black=?, game=?, status=? WHERE id=?"
             )) {
                 statement.setString(1, game.gameName());
                 statement.setString(2, game.whiteUsername());
                 statement.setString(3, game.blackUsername());
                 statement.setString(4, new Gson().toJson(game.game()));
-                statement.setInt(5, game.gameID());
+                statement.setString(5, game.status().toString());
+                statement.setInt(6, game.gameID());
 
                 int updateCount = statement.executeUpdate();
                 if (updateCount < 1) {

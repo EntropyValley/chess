@@ -117,4 +117,21 @@ public class GameService {
             throw new DataAccessException("Unable to update game");
         }
     }
+
+    public void updateGame(
+        String authToken, GameData gameData
+    ) throws DataAccessException {
+        try {
+            authDAO.getAuth(authToken);
+        } catch (DataAccessException exception) {
+            throw new UnauthorizedException("Not Authorized");
+        }
+
+        try {
+            gameDAO.updateGame(gameData);
+        } catch (DataAccessException exception) {
+            throw new DataAccessException("Unable to update game data");
+        }
+
+    }
 }
