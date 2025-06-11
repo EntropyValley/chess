@@ -137,6 +137,57 @@ public class WebSocketHandler {
         }
     }
 
+    private void detectEndGameConditions(MakeMoveCommand makeMoveCommand, ChessGame newGame, Validation validation, GameData newGameData) throws IOException {
+        String looserUsername = null;
+        String winnerUsername = null;
+        if (newGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            looserUsername = validation.gameData().blackUsername();
+            winnerUsername = validation.gameData().whiteUsername();
+        } else if (newGame.isInCheckmate(ChessGame.TeamColor.WHITE)) {
+            looserUsername = validation.gameData().whiteUsername();
+            winnerUsername = validation.gameData().blackUsername();
+        }
+
+        if (looserUsername != null || winnerUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                looserUsername + "is in checkmate! " + winnerUsername + "has won!"
+            );
+            handleEndOfGame(makeMoveCommand, newGameData);
+            return;
+        }
+
+        String stalemateUsername = null;
+        if (newGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
+            stalemateUsername = validation.gameData().blackUsername();
+        } else if (newGame.isInStalemate(ChessGame.TeamColor.WHITE)) {
+            stalemateUsername = validation.gameData().whiteUsername();
+        }
+
+        if (stalemateUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                stalemateUsername + "is in stalemate!"
+            );
+            handleEndOfGame(makeMoveCommand, newGameData);
+            return;
+        }
+
+        String checkedUsername = null;
+        if (newGame.isInCheck(ChessGame.TeamColor.BLACK)) {
+            checkedUsername = validation.gameData().blackUsername();
+        } else if (newGame.isInCheck(ChessGame.TeamColor.WHITE)) {
+            checkedUsername = validation.gameData().whiteUsername();
+        }
+
+        if (checkedUsername != null) {
+            notifyAll(
+                makeMoveCommand.getGameID(),
+                checkedUsername + "is in check!"
+            );
+        }
+    }
+
     private void onConnect(Session session, UserGameCommand connectCommand) throws IOException {
         Validation validation = validateCommand(session, connectCommand);
         if (!validation.isValid()) {
@@ -218,53 +269,6 @@ public class WebSocketHandler {
                 endingPos.getRow()  + "-" + endingPos.getColumn() + "!"
         );
 
-        String looserUsername = null;
-        String winnerUsername = null;
-        if (newGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
-            looserUsername = validation.gameData().blackUsername();
-            winnerUsername = validation.gameData().whiteUsername();
-        } else if (newGame.isInCheckmate(ChessGame.TeamColor.WHITE)) {
-            looserUsername = validation.gameData().whiteUsername();
-            winnerUsername = validation.gameData().blackUsername();
-        }
-
-        if (looserUsername != null || winnerUsername != null) {
-            notifyAll(
-                makeMoveCommand.getGameID(),
-                looserUsername + "is in checkmate! " + winnerUsername + "has won!"
-            );
-            handleEndOfGame(makeMoveCommand, newGameData);
-            return;
-        }
-
-        String stalemateUsername = null;
-        if (newGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
-            stalemateUsername = validation.gameData().blackUsername();
-        } else if (newGame.isInStalemate(ChessGame.TeamColor.WHITE)) {
-            stalemateUsername = validation.gameData().whiteUsername();
-        }
-
-        if (stalemateUsername != null) {
-            notifyAll(
-                makeMoveCommand.getGameID(),
-                stalemateUsername + "is in stalemate!"
-            );
-            handleEndOfGame(makeMoveCommand, newGameData);
-            return;
-        }
-
-        String checkedUsername = null;
-        if (newGame.isInCheck(ChessGame.TeamColor.BLACK)) {
-            checkedUsername = validation.gameData().blackUsername();
-        } else if (newGame.isInCheck(ChessGame.TeamColor.WHITE)) {
-            checkedUsername = validation.gameData().whiteUsername();
-        }
-
-        if (checkedUsername != null) {
-            notifyAll(
-                makeMoveCommand.getGameID(),
-                checkedUsername + "is in check!"
-            );
-        }
+        detectEndGameConditions(makeMoveCommand, newGame, validation, newGameData);
     }
 }
