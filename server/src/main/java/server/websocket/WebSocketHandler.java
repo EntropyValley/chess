@@ -58,13 +58,6 @@ public class WebSocketHandler {
         sessions.broadcastAll(gameID, load);
     }
 
-    private void sendNotification(Integer gameID, String username, String message) throws IOException {
-        sessions.send(
-            gameID, username,
-            new NotificationMessage(ServerMessage.ServerMessageType.NOTIFICATION, message)
-        );
-    }
-
     private void broadcastNotification(Integer gameID, String exclusionUsername, String message) throws IOException {
         sessions.broadcastExcept(
             gameID, exclusionUsername,

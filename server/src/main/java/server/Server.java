@@ -1,6 +1,7 @@
 package server;
 
 import exceptions.*;
+import server.websocket.WebSocketHandler;
 import spark.*;
 
 import dataaccess.*;
@@ -13,6 +14,8 @@ public class Server {
 
     private final UserHandler userHandler;
     private final GameHandler gameHandler;
+
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
         UserDAO userDAO;
@@ -47,12 +50,16 @@ public class Server {
 
         this.userHandler = new UserHandler(userService);
         this.gameHandler = new GameHandler(gameService);
+
+        this.webSocketHandler = new WebSocketHandler(gameService, userService);
     }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/ws", webSocketHandler);
 
         Spark.delete("/db", this::clear);
 
