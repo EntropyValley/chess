@@ -19,7 +19,7 @@ public class SessionManager {
         sessions.get(gameID).put(username, session);
     }
 
-    public void remove(String username, Integer gameID) {
+    public void remove(Integer gameID, String username) {
         sessions.get(gameID).remove(username);
     }
 

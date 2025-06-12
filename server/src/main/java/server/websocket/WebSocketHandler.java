@@ -40,9 +40,9 @@ public class WebSocketHandler {
             switch (command.getCommandType()) {
                 case CONNECT -> onConnect(session, command);
                 case MAKE_MOVE -> onMakeMove(session, new Gson().fromJson(message, MakeMoveCommand.class));
-                case LEAVE -> System.out.println("LEAVE");
+                case LEAVE -> onLeave(session, command);
                 case RESIGN -> System.out.println("RESIGN");
-                case null -> System.out.println("Empty Command");
+                case null -> System.out.println("Invalid Command");
             }
         } catch (IOException exception) {
             System.out.println("Error: " + exception.getMessage());
@@ -188,6 +188,10 @@ public class WebSocketHandler {
         }
     }
 
+    private char charFromRow(int row) {
+        return (char) ('a' + row);
+    }
+
     private void onConnect(Session session, UserGameCommand connectCommand) throws IOException {
         Validation validation = validateCommand(session, connectCommand);
         if (!validation.isValid()) {
@@ -233,6 +237,13 @@ public class WebSocketHandler {
             );
         }
 
+        if (validation.gameData().status() == GameData.GameStatus.ENDED) {
+            sendError(
+                    makeMoveCommand.getGameID(), validation.username(),
+                    "Game has already ended. You can no longer move pieces"
+            );
+        }
+
         ChessGame newGame = validation.gameData().game();
         try {
             newGame.makeMove(makeMoveCommand.getChessMove());
@@ -253,7 +264,7 @@ public class WebSocketHandler {
         try {
             gameService.updateGame(makeMoveCommand.getAuthToken(), newGameData);
         } catch (Exception exception) {
-            sendError(makeMoveCommand.getGameID(), validation.username(), "Unable to Update Game");
+            sendError(makeMoveCommand.getGameID(), validation.username(), "Unable to Update Game...");
         }
 
         sendLoadGame(
@@ -265,10 +276,44 @@ public class WebSocketHandler {
             makeMoveCommand.getGameID(),
             validation.username(),
             validation.username() + " has moved " + movedPiece.getPieceType() + " from " +
-                startingPos.getRow() + "-" + startingPos.getColumn() + " to " +
-                endingPos.getRow()  + "-" + endingPos.getColumn() + "!"
+                charFromRow(startingPos.getRow()) + startingPos.getColumn() + " to " +
+                charFromRow(endingPos.getRow())  + endingPos.getColumn() + "!"
         );
 
         detectEndGameConditions(makeMoveCommand, newGame, validation, newGameData);
+    }
+
+    private void onLeave(Session session, UserGameCommand leaveCommand) throws IOException {
+        Validation validation = validateCommand(session, leaveCommand);
+        if (!validation.isValid()) {
+            return;
+        }
+
+        ChessGame.TeamColor playerColor = teamColorFromGame(validation.gameData(), validation.username());
+        if (playerColor != null) {
+            try {
+                gameService.updateGame(leaveCommand.getAuthToken(), new GameData(
+                    validation.gameData().gameID(),
+                    playerColor == ChessGame.TeamColor.WHITE ? null : validation.gameData().whiteUsername(),
+                    playerColor == ChessGame.TeamColor.BLACK ? null : validation.gameData().blackUsername(),
+                    validation.gameData().gameName(),
+                    validation.gameData().game(),
+                    validation.gameData().status()
+                ));
+            } catch (DataAccessException exception) {
+                System.out.println("Unable to update game...");
+            }
+            broadcastNotification(
+                leaveCommand.getGameID(), validation.username(),
+                validation.username() + "has left the game..."
+            );
+        } else {
+            broadcastNotification(
+                leaveCommand.getGameID(), validation.username(),
+                validation.username() + "is no longer observing the game..."
+            );
+        }
+
+        sessions.remove(leaveCommand.getGameID(), validation.username());
     }
 }
