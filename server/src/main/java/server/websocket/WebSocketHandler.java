@@ -41,7 +41,7 @@ public class WebSocketHandler {
                 case CONNECT -> onConnect(session, command);
                 case MAKE_MOVE -> onMakeMove(session, new Gson().fromJson(message, MakeMoveCommand.class));
                 case LEAVE -> onLeave(session, command);
-                case RESIGN -> System.out.println("RESIGN");
+                case RESIGN -> onResign(session, command);
                 case null -> System.out.println("Invalid Command");
             }
         } catch (IOException exception) {
@@ -119,14 +119,14 @@ public class WebSocketHandler {
         return new Validation(username, gameData, true);
     }
 
-    private void handleEndOfGame(MakeMoveCommand makeMoveCommand, GameData gameToEnd) {
+    private void handleEndOfGame(UserGameCommand command, GameData gameToEnd, ChessGame.TeamColor resigning) {
         try {
             gameService.updateGame(
-                makeMoveCommand.getAuthToken(),
+                command.getAuthToken(),
                 new GameData(
                     gameToEnd.gameID(),
-                    gameToEnd.whiteUsername(),
-                    gameToEnd.blackUsername(),
+                    resigning == ChessGame.TeamColor.WHITE ? null : gameToEnd.whiteUsername(),
+                    resigning == ChessGame.TeamColor.BLACK ? null : gameToEnd.blackUsername(),
                     gameToEnd.gameName(),
                     gameToEnd.game(),
                     GameData.GameStatus.ENDED
@@ -153,7 +153,7 @@ public class WebSocketHandler {
                 makeMoveCommand.getGameID(),
                 looserUsername + "is in checkmate! " + winnerUsername + "has won!"
             );
-            handleEndOfGame(makeMoveCommand, newGameData);
+            handleEndOfGame(makeMoveCommand, newGameData, null);
             return;
         }
 
@@ -167,9 +167,9 @@ public class WebSocketHandler {
         if (stalemateUsername != null) {
             notifyAll(
                 makeMoveCommand.getGameID(),
-                stalemateUsername + "is in stalemate!"
+                stalemateUsername + "is in stalemate! Game Over!"
             );
-            handleEndOfGame(makeMoveCommand, newGameData);
+            handleEndOfGame(makeMoveCommand, newGameData, null);
             return;
         }
 
@@ -315,5 +315,32 @@ public class WebSocketHandler {
         }
 
         sessions.remove(leaveCommand.getGameID(), validation.username());
+    }
+
+    private void onResign(Session session, UserGameCommand command) throws IOException {
+        Validation validation = validateCommand(session, command);
+        if (!validation.isValid()) {
+            return;
+        }
+
+        ChessGame.TeamColor playerColor = teamColorFromGame(validation.gameData(), validation.username());
+        if (playerColor == null) {
+            sendError(
+                command.getGameID(),
+                validation.username(),
+                validation.username() + "is not playing this game – cannot resign."
+            );
+        }
+
+        if (validation.gameData().status() == GameData.GameStatus.ENDED) {
+            sendError(
+                command.getGameID(),
+                validation.username(),
+                "Game is over – cannot resign."
+            );
+        }
+
+        notifyAll(command.getGameID(), validation.username() + "has resigned this game. Game Over!");
+        handleEndOfGame(command, validation.gameData(), playerColor);
     }
 }
