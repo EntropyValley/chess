@@ -139,12 +139,9 @@ public class ChessGame {
         if (currentPiece != null) {
             if (currentPiece.getTeamColor() != teamColor) {
                 Collection<ChessMove> opponentMoves = currentPiece.pieceMoves(boardToCheck, currentPosition);
-                if (opponentMoves.stream().anyMatch(
-                        move -> move.getEndPosition().equals(kingPosition)
-                    )
-                ) {
-                    return true;
-                }
+                return opponentMoves.stream().anyMatch(
+                    move -> move.getEndPosition().equals(kingPosition)
+                );
             }
         }
         return false;
