@@ -1,10 +1,12 @@
 package websocket;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import client.ResponseException;
-import model.AuthData;
+import model.*;
+import ui.ClientUtils;
 import websocket.commands.*;
-import websocket.messages.ServerMessage;
+import websocket.messages.*;
 
 import javax.websocket.*;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import com.google.gson.Gson;
 
 public class WebSocketFacade extends Endpoint {
     Session session;
+    GameData currentGame;
+    ChessGame.TeamColor currentColor;
 
     public WebSocketFacade(String url) throws ResponseException {
         try {
@@ -27,9 +31,9 @@ public class WebSocketFacade extends Endpoint {
                 ServerMessage serverMessage = new Gson().fromJson(msg, ServerMessage.class);
 
                 switch(serverMessage.getServerMessageType()) {
-                    case NOTIFICATION -> System.out.println("NOTIFICATION");
-                    case ERROR -> System.out.println("ERROR");
-                    case LOAD_GAME -> System.out.println("LOAD");
+                    case NOTIFICATION -> onNotification(new Gson().fromJson(msg, NotificationMessage.class));
+                    case ERROR -> onError(new Gson().fromJson(msg, ErrorMessage.class));
+                    case LOAD_GAME -> onLoadGame(new Gson().fromJson(msg, LoadGameMessage.class));
                     case null -> System.out.println("Invalid Server Message received...");
                 }
             });
@@ -54,7 +58,8 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void connect(AuthData authData, Integer gameID) {
+    public void connect(AuthData authData, Integer gameID, ChessGame.TeamColor color) {
+        currentColor = color;
         sendCommand(
             new UserGameCommand(UserGameCommand.CommandType.CONNECT, authData.authToken(), gameID)
         );
@@ -76,5 +81,22 @@ public class WebSocketFacade extends Endpoint {
         sendCommand(
             new UserGameCommand(UserGameCommand.CommandType.LEAVE, authData.authToken(), gameID)
         );
+    }
+
+    public void onNotification(NotificationMessage message) {
+        ClientUtils.genericOutput(message.message());
+    }
+
+    public void onError(ErrorMessage message) {
+        ClientUtils.failureOutput(message.error());
+    }
+
+    public void onLoadGame(LoadGameMessage message) {
+        currentGame = message.game();
+        ClientUtils.outputGame(currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE);
+    }
+
+    public void reloadCurrentGame() {
+        ClientUtils.outputGame(currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE);
     }
 }
