@@ -5,6 +5,7 @@ import model.AuthData;
 import model.GameData;
 import model.UserData;
 import ui.ClientState;
+import ui.ClientUtils;
 
 import java.util.*;
 
@@ -63,14 +64,14 @@ public class Main {
     private static boolean handleLoggedInCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
         switch (cmdName) {
             case "help":
-                genericOutput("↪ AVAILABLE COMMANDS:");
-                genericOutput("↪  create <NAME> - Create a game");
-                genericOutput("↪  list - Get a list of games");
-                genericOutput("↪  play <id> [WHITE|BLACK] - Play a game");
-                genericOutput("↪  observe <id> - Observe a game");
-                genericOutput("↪  logout");
-                genericOutput("↪  help");
-                genericOutput("↪  quit");
+                ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
+                ClientUtils.genericOutput("↪  create <NAME> - Create a game");
+                ClientUtils.genericOutput("↪  list - Get a list of games");
+                ClientUtils.genericOutput("↪  play <id> [WHITE|BLACK] - Play a game");
+                ClientUtils.genericOutput("↪  observe <id> - Observe a game");
+                ClientUtils.genericOutput("↪  logout");
+                ClientUtils.genericOutput("↪  help");
+                ClientUtils.genericOutput("↪  quit");
                 break;
             case "create":
                 handleCreateCommand(cmdArgs, facade);
@@ -89,7 +90,7 @@ public class Main {
                     for (GameData gameData : gameList) {
                         String white = gameData.whiteUsername() != null ? gameData.whiteUsername() : "[OPEN]";
                         String black = gameData.blackUsername() != null ? gameData.blackUsername() : "[OPEN]";
-                        successOutput(
+                        ClientUtils.successOutput(
                                 "↪  Game " + increment + " (" + gameData.gameName() + "): " +
                                         SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + white + RESET_BG_COLOR + SET_TEXT_COLOR_GREEN + " (white), " +
                                         SET_BG_COLOR_WHITE + SET_TEXT_COLOR_BLACK + black + RESET_BG_COLOR + SET_TEXT_COLOR_GREEN + " (black)"
@@ -97,11 +98,11 @@ public class Main {
                         increment += 1;
                     }
                 } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
+                    ClientUtils.failureOutput("↪  Failed to connect to the server");
                 } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to list games: unauthorized");
+                    ClientUtils.failureOutput("↪  Failed to list games: unauthorized");
                 } catch (GenericTakenException | GameNotFoundException | BadRequestException e) {
-                    failureOutput("↪  Failed to list games: unknown error");
+                    ClientUtils.failureOutput("↪  Failed to list games: unknown error");
                 }
                 break;
             case "play":
@@ -119,32 +120,32 @@ public class Main {
                     facade.logout(currentAuth);
                     currentAuth = null;
                     currentState = ClientState.LOGGED_OUT;
-                    successOutput("↪  Successfully logged out");
+                    ClientUtils.successOutput("↪  Successfully logged out");
                 } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
+                    ClientUtils.failureOutput("↪  Failed to connect to the server");
                 } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to logout: unauthorized");
+                    ClientUtils.failureOutput("↪  Failed to logout: unauthorized");
                 } catch (Exception exception) {
-                    failureOutput("↪  Failed to logout: unknown error");
+                    ClientUtils.failureOutput("↪  Failed to logout: unknown error");
                 }
                 break;
             case "quit":
-                successOutput("↪ Thanks for playing!");
+                ClientUtils.successOutput("↪ Thanks for playing!");
                 return true;
             case "deletealldataiunderstandtheconsequencesofthisaction":
                 try {
                     facade.clear();
                     currentAuth = null;
                     currentState = ClientState.LOGGED_OUT;
-                    successOutput("↪  Successfully wiped all traces of society from this server");
+                    ClientUtils.successOutput("↪  Successfully wiped all traces of society from this server");
                 } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
+                    ClientUtils.failureOutput("↪  Failed to connect to the server");
                 } catch (Exception exception) {
-                    failureOutput("↪  Failed to completely erase all data from the server");
+                    ClientUtils.failureOutput("↪  Failed to completely erase all data from the server");
                 }
                 break;
             default:
-                failureOutput("↪ Invalid Command!");
+                ClientUtils.failureOutput("↪ Invalid Command!");
                 break;
         }
 
@@ -159,20 +160,20 @@ public class Main {
         try {
             ServerFacade.CreateGameResponse response = facade.createGame(currentAuth, cmdArgs[0]);
             if (response != null) {
-                successOutput("↪  successfully created game!");
+                ClientUtils.successOutput("↪  successfully created game!");
             } else {
-                failureOutput("↪  Failed to create game: unknown error");
+                ClientUtils.failureOutput("↪  Failed to create game: unknown error");
             }
         } catch (ConnectionException exception) {
-            failureOutput("↪  Failed to connect to the server");
+            ClientUtils.failureOutput("↪  Failed to connect to the server");
         } catch (BadRequestException exception) {
-            failureOutput("↪  Failed to create game: malformed request");
+            ClientUtils.failureOutput("↪  Failed to create game: malformed request");
         } catch (GenericTakenException exception) {
-            failureOutput("↪  Failed to create game: game already taken");
+            ClientUtils.failureOutput("↪  Failed to create game: game already taken");
         } catch (GameNotFoundException exception) {
-            failureOutput("↪  Failed to create game: game not found");
+            ClientUtils.failureOutput("↪  Failed to create game: game not found");
         } catch (Exception exception) {
-            failureOutput("↪  Failed to create game: unknown error");
+            ClientUtils.failureOutput("↪  Failed to create game: unknown error");
         }
     }
 
@@ -188,7 +189,7 @@ public class Main {
             return;
         }
 
-        outputGame(playerInfo.gameData(), playerInfo.teamColor());
+        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor());
     }
 
     private static PlayerInfo getMatchedGame(String[] cmdArgs, ServerFacade facade) {
@@ -197,7 +198,7 @@ public class Main {
         try {
             observationIndex = Integer.parseInt(cmdArgs[0]);
         } catch (NumberFormatException e) {
-            failureOutput("↪  <GAME_INDEX> is not a number>");
+            ClientUtils.failureOutput("↪  <GAME_INDEX> is not a number>");
             return null;
         }
 
@@ -209,7 +210,7 @@ public class Main {
         } else if (observationColorArg.equals("black")) {
             observationColor = ChessGame.TeamColor.BLACK;
         } else {
-            failureOutput("↪  <COLOR> is not WHITE or BLACK");
+            ClientUtils.failureOutput("↪  <COLOR> is not WHITE or BLACK");
             return null;
         }
 
@@ -221,10 +222,10 @@ public class Main {
 
             sortGameList(observableGameList);
         } catch (UnauthorizedException exception) {
-            failureOutput("↪  Failed to fetch games: unauthorized");
+            ClientUtils.failureOutput("↪  Failed to fetch games: unauthorized");
             return null;
         } catch (Exception exception) {
-            failureOutput("↪  Failed to fetch games");
+            ClientUtils.failureOutput("↪  Failed to fetch games");
             return null;
         }
 
@@ -233,7 +234,7 @@ public class Main {
         try {
             observedGame = observableGameList.get(observationIndex - 1);
         } catch (Exception e) {
-            failureOutput("↪  Game " + observationIndex + " not available");
+            ClientUtils.failureOutput("↪  Game " + observationIndex + " not available");
             return null;
         }
 
@@ -255,14 +256,14 @@ public class Main {
 
         if (playerInfo.teamColor() == ChessGame.TeamColor.WHITE && playerInfo.gameData().whiteUsername() != null) {
             if (!playerInfo.gameData().whiteUsername().equals(currentAuth.username())) {
-                failureOutput("↪  Color WHITE not available for this game");
+                ClientUtils.failureOutput("↪  Color WHITE not available for this game");
                 return;
             } else {
                 skipJoin = true;
             }
         } else if (playerInfo.teamColor() == ChessGame.TeamColor.BLACK && playerInfo.gameData().blackUsername() != null) {
             if (!playerInfo.gameData().blackUsername().equals(currentAuth.username())) {
-                failureOutput("↪  Color BLACK not available for this game");
+                ClientUtils.failureOutput("↪  Color BLACK not available for this game");
                 return;
             } else {
                 skipJoin = true;
@@ -273,135 +274,26 @@ public class Main {
             try {
                 facade.joinGame(currentAuth, playerInfo.gameData().gameID(), playerInfo.teamColor().toString().toLowerCase());
             } catch (ConnectionException exception) {
-                failureOutput("↪  Failed to connect to the server");
+                ClientUtils.failureOutput("↪  Failed to connect to the server");
                 return;
             } catch (BadRequestException exception) {
-                failureOutput("↪  Failed to join game: malformed request");
+                ClientUtils.failureOutput("↪  Failed to join game: malformed request");
                 return;
             } catch (UnauthorizedException exception) {
-                failureOutput("↪  Failed to join game: unauthorized");
+                ClientUtils.failureOutput("↪  Failed to join game: unauthorized");
                 return;
             } catch (GenericTakenException exception) {
-                failureOutput("↪  Failed to join game: color already taken");
+                ClientUtils.failureOutput("↪  Failed to join game: color already taken");
                 return;
             } catch (GameNotFoundException exception) {
-                failureOutput("↪  Failed to join game: game not found");
+                ClientUtils.failureOutput("↪  Failed to join game: game not found");
                 return;
             }
         } else {
-            successOutput("↪  Rejoining game...");
+            ClientUtils.successOutput("↪  Rejoining game...");
         }
 
-        outputGame(playerInfo.gameData(), playerInfo.teamColor());
-    }
-
-    private static void outputGame(GameData game, ChessGame.TeamColor color) {
-        boolean reverse = color == ChessGame.TeamColor.BLACK;
-
-        ArrayList<String> letters = generateDefaultLettersArray();
-
-        ArrayList<String> numbers = generateDefaultNumbersArray();
-
-        if (reverse) {
-            Collections.reverse(letters);
-            Collections.reverse(numbers);
-        }
-
-        System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
-
-        for (String letter : letters) {
-            System.out.print(letter);
-        }
-
-        System.out.print("   " + RESET_BG_COLOR + "\n");
-
-        ChessGame board = game.game();
-
-        for (String number : numbers) {
-            String trimmedNumber = number.trim();
-            int rawNumber = Integer.parseInt(trimmedNumber);
-
-            System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
-
-            for (int i=1; i<=8; i++) {
-                String bgColor;
-                if (rawNumber%2==0) {
-                    if (color == ChessGame.TeamColor.WHITE) {
-                        bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
-                    } else {
-                        bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
-                    }
-                } else {
-                    if (color == ChessGame.TeamColor.WHITE) {
-                        bgColor = i%2==0 ? SET_BG_COLOR_WHITE : SET_BG_COLOR_BLACK;
-                    } else {
-                        bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
-                    }
-                }
-
-                ChessPiece piece;
-
-                if (reverse) {
-                    piece = board.getBoard().getPiece(new ChessPosition(rawNumber, 9-i));
-                } else {
-                    piece = board.getBoard().getPiece(new ChessPosition(rawNumber, i));
-                }
-
-                if (piece != null) {
-                    String textColor = piece.getTeamColor() == ChessGame.TeamColor.BLACK ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_GREEN;
-
-                    switch(piece.getPieceType()) {
-                        case PAWN:
-                            System.out.print(bgColor + textColor + " P " + RESET_BG_COLOR );
-                            break;
-                        case QUEEN:
-                            System.out.print(bgColor + textColor + " Q " + RESET_BG_COLOR );
-                            break;
-                        case KING:
-                            System.out.print(bgColor + textColor + " K " + RESET_BG_COLOR );
-                            break;
-                        case KNIGHT:
-                            System.out.print(bgColor + textColor + " N " + RESET_BG_COLOR );
-                            break;
-                        case ROOK:
-                            System.out.print(bgColor + textColor + " R " + RESET_BG_COLOR );
-                            break;
-                        case BISHOP:
-                            System.out.print(bgColor + textColor + " B " + RESET_BG_COLOR );
-                            break;
-                        default:
-                            System.out.print(bgColor + textColor + "   " + RESET_BG_COLOR );
-                            break;
-                    }
-                } else {
-                    System.out.print(bgColor + "   " + RESET_BG_COLOR );
-                }
-            }
-
-            System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
-            System.out.print(RESET_BG_COLOR + "\n");
-        }
-
-        System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
-
-        for (String letter : letters) {
-            System.out.print(letter);
-        }
-
-        System.out.print("   " + RESET_BG_COLOR + RESET_TEXT_COLOR + "\n");
-
-    }
-
-    private static ArrayList<String> generateDefaultNumbersArray() {
-        return new ArrayList<>(
-                Arrays.asList(" 8 ", " 7 ", " 6 ", " 5 ", " 4 ", " 3 ", " 2 ", " 1 ")
-        );
-    }
-
-    private static ArrayList<String> generateDefaultLettersArray() {
-        return new ArrayList<>(
-                Arrays.asList(" a ", " b ", " c ", " d ", " e ", " f ", " g ", " h ")
-        );
+        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor());
     }
 
     private static void sortGameList(List<GameData> gameList) {
@@ -416,11 +308,11 @@ public class Main {
     private static boolean handleLoggedOutCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
         switch (cmdName) {
             case "help":
-                genericOutput("↪ AVAILABLE COMMANDS:");
-                genericOutput("↪  register <USERNAME> <PASSWORD> <EMAIL>");
-                genericOutput("↪  login <USERNAME> <PASSWORD>");
-                genericOutput("↪  help");
-                genericOutput("↪  quit");
+                ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
+                ClientUtils.genericOutput("↪  register <USERNAME> <PASSWORD> <EMAIL>");
+                ClientUtils.genericOutput("↪  login <USERNAME> <PASSWORD>");
+                ClientUtils. genericOutput("↪  help");
+                ClientUtils.genericOutput("↪  quit");
                 break;
             case "register":
                 if (forceNArgs(cmdArgs, 3, "register", "<USERNAME> <PASSWORD> <EMAIL>")) {
@@ -432,16 +324,16 @@ public class Main {
                     currentAuth = facade.register(userData);
                     if (currentAuth != null) {
                         currentState = ClientState.LOGGED_IN;
-                        successOutput("↪  Successfully registered and logged in");
+                        ClientUtils.successOutput("↪  Successfully registered and logged in");
                     }
                 } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
+                    ClientUtils.failureOutput("↪  Failed to connect to the server");
                 } catch (BadRequestException exception) {
-                    failureOutput("↪  Failed to register and login: malformed request");
+                    ClientUtils.failureOutput("↪  Failed to register and login: malformed request");
                 } catch (GenericTakenException exception) {
-                    failureOutput("↪  Failed to register and login: username already taken");
+                    ClientUtils.failureOutput("↪  Failed to register and login: username already taken");
                 } catch (Exception exception) {
-                    failureOutput("↪  Failed to login: unknown error");
+                    ClientUtils.failureOutput("↪  Failed to login: unknown error");
                 }
                 break;
             case "login":
@@ -454,44 +346,32 @@ public class Main {
                     currentAuth = facade.login(userData);
                     if (currentAuth != null) {
                         currentState = ClientState.LOGGED_IN;
-                        successOutput("↪  Successfully logged in");
+                        ClientUtils.successOutput("↪  Successfully logged in");
                     }
                 } catch (ConnectionException exception) {
-                    failureOutput("↪  Failed to connect to the server");
+                    ClientUtils.failureOutput("↪  Failed to connect to the server");
                 } catch (BadRequestException exception) {
-                    failureOutput("↪  Failed to login: malformed request");
+                    ClientUtils.failureOutput("↪  Failed to login: malformed request");
                 } catch (UnauthorizedException exception) {
-                    failureOutput("↪  Failed to login: invalid username or password");
+                    ClientUtils.failureOutput("↪  Failed to login: invalid username or password");
                 } catch (Exception exception) {
-                    failureOutput("↪  Failed to login: unknown error");
+                    ClientUtils.failureOutput("↪  Failed to login: unknown error");
                 }
                 break;
             case "quit":
-                successOutput("↪ Thanks for playing!");
+                ClientUtils.successOutput("↪ Thanks for playing!");
                 return true;
             default:
-                failureOutput("↪ Invalid Command!");
+                ClientUtils.failureOutput("↪ Invalid Command!");
                 break;
         }
         return false;
     }
 
-    static void successOutput(String output) {
-        System.out.println(SET_TEXT_COLOR_GREEN + output + RESET_TEXT_COLOR);
-    }
-
-    static void failureOutput(String output) {
-        System.out.println(SET_TEXT_COLOR_RED + output + RESET_TEXT_COLOR);
-    }
-
-    static void genericOutput(String output) {
-        System.out.println(output);
-    }
-
     static boolean forceNArgs(String[] args, int count, String command, String argsDefinition) {
         if (args.length != count) {
             String delimiter = count > 0 ? ": " : "";
-            failureOutput("↪  `" + command + "` requires " + count + " arguments" + delimiter + argsDefinition);
+            ClientUtils.failureOutput("↪  `" + command + "` requires " + count + " arguments" + delimiter + argsDefinition);
             return true; // break
         }
         return false; // continue
