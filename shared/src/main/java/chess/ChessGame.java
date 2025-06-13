@@ -203,6 +203,10 @@ public class ChessGame {
         return validMoves;
     }
 
+    public HashSet<ChessMove> getValidMovesForPositionOnBoard(ChessPosition startingPosition) {
+        return getValidPositionMovesForBoard(currentBoard, currentBoard.getPiece(startingPosition).getTeamColor(), startingPosition);
+    }
+
     // Get valid moves for a single position on an arbitrary board (either potential or current)
     private HashSet<ChessMove> getValidPositionMovesForBoard(ChessBoard boardToSearch, TeamColor teamColor, ChessPosition currentPosition) {
         ChessPiece currentPiece = boardToSearch.getPiece(currentPosition);

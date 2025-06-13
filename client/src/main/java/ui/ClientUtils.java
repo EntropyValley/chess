@@ -8,11 +8,13 @@ import model.GameData;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
+import static java.lang.Integer.parseInt;
 import static ui.EscapeSequences.*;
 
 public class ClientUtils {
-    public static void outputGame(GameData game, ChessGame.TeamColor color) {
+    public static void outputGame(GameData game, ChessGame.TeamColor color, ChessPosition highlightStart, HashSet<ChessPosition> highlightEnd) {
         boolean reverse = color == ChessGame.TeamColor.BLACK;
 
         ArrayList<String> letters = generateDefaultLettersArray();
@@ -36,13 +38,19 @@ public class ClientUtils {
 
         for (String number : numbers) {
             String trimmedNumber = number.trim();
-            int rawNumber = Integer.parseInt(trimmedNumber);
+            int rawNumber = parseInt(trimmedNumber);
 
             System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
 
             for (int i=1; i<=8; i++) {
                 String bgColor;
-                if (rawNumber%2==0) {
+                ChessPosition position = new ChessPosition(parseInt(number), i);
+
+                if (position.equals(highlightStart)) {
+                    bgColor = SET_BG_COLOR_YELLOW;
+                } else if (highlightEnd.contains(position)) {
+                    bgColor = SET_BG_COLOR_GREEN;
+                } else if (rawNumber%2==0) {
                     if (color == ChessGame.TeamColor.WHITE) {
                         bgColor = i%2==0 ? SET_BG_COLOR_BLACK : SET_BG_COLOR_WHITE;
                     } else {

@@ -2,6 +2,7 @@ package websocket;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPosition;
 import client.ResponseException;
 import model.*;
 import ui.ClientUtils;
@@ -12,6 +13,7 @@ import javax.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import com.google.gson.Gson;
 
 public class WebSocketFacade extends Endpoint {
@@ -93,10 +95,30 @@ public class WebSocketFacade extends Endpoint {
 
     public void onLoadGame(LoadGameMessage message) {
         currentGame = message.game();
-        ClientUtils.outputGame(currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE);
+        ClientUtils.outputGame(
+            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            null, null
+        );
     }
 
     public void reloadCurrentGame() {
-        ClientUtils.outputGame(currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE);
+        ClientUtils.outputGame(
+            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            null, null
+        );
+    }
+
+    public void showAvailableMoves(ChessPosition startingPosition) {
+        HashSet<ChessMove> availableMoves = currentGame.game().getValidMovesForPositionOnBoard(startingPosition);
+        HashSet<ChessPosition> endingPositions = new HashSet<>();
+
+        for (ChessMove move : availableMoves) {
+            endingPositions.add(move.getEndPosition());
+        }
+
+        ClientUtils.outputGame(
+            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            startingPosition, endingPositions
+        );
     }
 }
