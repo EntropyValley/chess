@@ -18,9 +18,10 @@ public class Main {
     static ServerFacade facade;
     static WebSocketFacade ws;
     static String url = "http://localhost:8083";
+    static Scanner scanner;
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        scanner = new Scanner(System.in);
         facade = new ServerFacade(url);
 
         System.out.print(ERASE_SCREEN);
@@ -199,7 +200,9 @@ public class Main {
             return;
         }
 
-        ClientUtils.outputGame(currentAuth, playerInfo.gameData(), playerInfo.teamColor(), null, null);
+        currentState = ClientState.PLAYING;
+        ws = new WebSocketFacade(url, currentAuth);
+        ws.connect(currentAuth, playerInfo.gameData.gameID(), null);
     }
 
     private static PlayerInfo getMatchedGame(String[] cmdArgs) {
@@ -408,7 +411,6 @@ public class Main {
                 if (forceNArgs(cmdArgs, 2, "move", "[STARTING_POSITION] [ENDING_POSITION] (PROMOTION)")) {
                     break;
                 }
-
                 if (cmdArgs[0].length() != 2) {
                     ClientUtils.failureOutput("↪  [STARTING_POSITION] requires exactly one column and one row in the format \"A4\"");
                     break;
@@ -417,34 +419,32 @@ public class Main {
                     ClientUtils.failureOutput("↪  [ENDING_POSITION] requires exactly one column and one row in the format \"A4\"");
                     break;
                 }
-
                 ChessPiece.PieceType promotionPiece = null;
                 if (cmdArgs.length >= 3) {
                     promotionPiece = ChessPiece.PieceType.valueOf(cmdArgs[2]);
                 }
-
                 int colStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
                 int rowStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
                 ChessPosition startingPosition = new ChessPosition(rowStart, colStart);
                 int colEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
                 int rowEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
                 ChessGame.TeamColor teamColor = ws.getCurrentColor();
-
-                if ((
-                        (teamColor == ChessGame.TeamColor.BLACK && rowEnd == 1) ||
+                if ((   (teamColor == ChessGame.TeamColor.BLACK && rowEnd == 1) ||
                         (teamColor == ChessGame.TeamColor.WHITE && rowEnd == 8)
                     ) && promotionPiece == null) {
                     ClientUtils.failureOutput("↪  [POSITION_PIECE] is required when moving to the end of the board");
                 }
-
                 ChessPosition endingPosition = new ChessPosition(rowEnd, colEnd);
-
                 ws.makeMove(
                     currentAuth,
                     new ChessMove(startingPosition, endingPosition, promotionPiece)
                 );
                 break;
             case "resign":
+                ClientUtils.genericOutput("Are you sure you want to resign?");
+                if (!scanner.nextLine().equalsIgnoreCase("yes")) {
+                    break;
+                }
                 ws.resign(currentAuth);
                 ws = null;
                 currentState = ClientState.LOGGED_IN;
