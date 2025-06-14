@@ -401,8 +401,8 @@ public class Main {
                     break;
                 }
 
-                int row = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
-                int col = Integer.parseInt(cmdArgs[0].charAt(1) + "");
+                int col = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
+                int row = Integer.parseInt(cmdArgs[0].charAt(1) + "");
 
                 ChessPosition position = new ChessPosition(row, col);
 
@@ -428,13 +428,13 @@ public class Main {
                     promotionPiece = ChessPiece.PieceType.valueOf(cmdArgs[2]);
                 }
 
-                int rowStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
-                int colStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
+                int colStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
+                int rowStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
 
                 ChessPosition startingPosition = new ChessPosition(rowStart, colStart);
 
-                int rowEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
-                int colEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
+                int colEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
+                int rowEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
 
                 ChessGame.TeamColor teamColor = ws.getCurrentColor();
 

@@ -62,13 +62,11 @@ public class WebSocketHandler {
     private void sendLoadGame(Integer gameID, String username, GameData gameData) throws IOException {
         ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
         sessions.send(gameID, username, load);
-        System.out.println("SENDING LOADGAME TO " + username + " IN GAME " + gameID);
     }
 
     private void broadcastLoadGame(Integer gameID, GameData gameData) throws IOException {
         ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
         sessions.broadcastAll(gameID, load);
-        System.out.println("BROADCASTING LOADGAME TO GAME" + gameID);
     }
 
     private void broadcastNotification(Integer gameID, String exclusionUsername, String message) throws IOException {
@@ -159,7 +157,7 @@ public class WebSocketHandler {
         if (looserUsername != null || winnerUsername != null) {
             notifyAll(
                 makeMoveCommand.getGameID(),
-                looserUsername + "is in checkmate! " + winnerUsername + "has won!"
+                looserUsername + " is in checkmate! " + winnerUsername + " has won!"
             );
             handleEndOfGame(makeMoveCommand, newGameData, null);
             return;
@@ -175,7 +173,7 @@ public class WebSocketHandler {
         if (stalemateUsername != null) {
             notifyAll(
                 makeMoveCommand.getGameID(),
-                stalemateUsername + "is in stalemate! Game Over!"
+                stalemateUsername + " is in stalemate! Game Over!"
             );
             handleEndOfGame(makeMoveCommand, newGameData, null);
             return;
@@ -191,7 +189,7 @@ public class WebSocketHandler {
         if (checkedUsername != null) {
             notifyAll(
                 makeMoveCommand.getGameID(),
-                checkedUsername + "is in check!"
+                checkedUsername + " is in check!"
             );
         }
     }
@@ -213,7 +211,7 @@ public class WebSocketHandler {
         if (color == null) {
             broadcastNotification(
                 connectCommand.getGameID(), validation.username(),
-                "User " + validation.username() + "joined as an observer"
+                "User " + validation.username() + " joined as an observer"
             );
         } else {
             broadcastNotification(
@@ -226,10 +224,14 @@ public class WebSocketHandler {
     }
 
     private void onMakeMove(Session session, MakeMoveCommand makeMoveCommand) throws IOException {
+        System.out.println(makeMoveCommand.getChessMove());
+
         Validation validation = validateCommand(session, makeMoveCommand);
         if (!validation.isValid()) {
             return;
         }
+
+        System.out.println(validation.gameData().game().getBoard().getPiece(new ChessPosition(2,4)));
 
         ChessGame.TeamColor playerColor = teamColorFromGame(validation.gameData(), validation.username());
 
@@ -322,12 +324,12 @@ public class WebSocketHandler {
             }
             broadcastNotification(
                 leaveCommand.getGameID(), validation.username(),
-                validation.username() + "has left the game..."
+                validation.username() + " has left the game..."
             );
         } else {
             broadcastNotification(
                 leaveCommand.getGameID(), validation.username(),
-                validation.username() + "is no longer observing the game..."
+                validation.username() + " is no longer observing the game..."
             );
         }
 
@@ -345,7 +347,7 @@ public class WebSocketHandler {
             sendError(
                 command.getGameID(),
                 validation.username(),
-                validation.username() + "is not playing this game – cannot resign."
+                validation.username() + " is not playing this game – cannot resign."
             );
             return;
         }
@@ -359,7 +361,7 @@ public class WebSocketHandler {
             return;
         }
 
-        notifyAll(command.getGameID(), validation.username() + "has resigned this game. Game Over!");
+        notifyAll(command.getGameID(), validation.username() + " has resigned this game. Game Over!");
         handleEndOfGame(command, validation.gameData(), playerColor);
     }
 }
