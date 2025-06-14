@@ -15,11 +15,13 @@ import static java.lang.Integer.parseInt;
 import static ui.EscapeSequences.*;
 
 public class ClientUtils {
-    public static void outputGame(AuthData currentAuth, GameData game, ChessGame.TeamColor color, ChessPosition highlightStart, HashSet<ChessPosition> highlightEnd) {
+    public static void outputGame(
+        AuthData currentAuth, GameData game, ChessGame.TeamColor color,
+        ChessPosition highlightStart, HashSet<ChessPosition> highlightEnd
+    ) {
         boolean reverse = color == ChessGame.TeamColor.BLACK;
 
         ArrayList<String> letters = generateDefaultLettersArray();
-
         ArrayList<String> numbers = generateDefaultNumbersArray();
 
         if (reverse) {
@@ -28,19 +30,15 @@ public class ClientUtils {
         }
 
         System.out.print("\n" + SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
-
         for (String letter : letters) {
             System.out.print(letter);
         }
-
         System.out.print("   " + RESET_BG_COLOR + "\n");
 
         ChessGame board = game.game();
-
         for (String number : numbers) {
             String trimmedNumber = number.trim();
             int rawNumber = parseInt(trimmedNumber);
-
             System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
 
             for (int i=1; i<=8; i++) {
@@ -66,13 +64,11 @@ public class ClientUtils {
                 }
 
                 ChessPiece piece;
-
                 if (reverse) {
                     piece = board.getBoard().getPiece(new ChessPosition(rawNumber, 9-i));
                 } else {
                     piece = board.getBoard().getPiece(new ChessPosition(rawNumber, i));
                 }
-
                 if (piece != null) {
                     String textColor = piece.getTeamColor() == ChessGame.TeamColor.BLACK ? SET_TEXT_COLOR_RED : SET_TEXT_COLOR_GREEN;
 
@@ -103,11 +99,9 @@ public class ClientUtils {
                     System.out.print(bgColor + "   " + RESET_BG_COLOR );
                 }
             }
-
             System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + number);
             System.out.print(RESET_BG_COLOR + "\n");
         }
-
         System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
 
         for (String letter : letters) {

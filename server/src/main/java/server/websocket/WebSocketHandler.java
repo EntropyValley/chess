@@ -143,7 +143,9 @@ public class WebSocketHandler {
         }
     }
 
-    private void detectEndGameConditions(MakeMoveCommand makeMoveCommand, ChessGame newGame, Validation validation, GameData newGameData) throws IOException {
+    private void detectEndGameConditions(
+        MakeMoveCommand makeMoveCommand, ChessGame newGame, Validation validation, GameData newGameData
+    ) throws IOException {
         String looserUsername = null;
         String winnerUsername = null;
         if (newGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {

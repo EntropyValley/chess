@@ -330,7 +330,6 @@ public class Main {
                 if (forceNArgs(cmdArgs, 3, "register", "<USERNAME> <PASSWORD> <EMAIL>")) {
                     break;
                 }
-
                 try {
                     UserData userData = new UserData(cmdArgs[0], cmdArgs[1], cmdArgs[2]);
                     currentAuth = facade.register(userData);
@@ -352,7 +351,6 @@ public class Main {
                 if (forceNArgs(cmdArgs, 2, "login", "<USERNAME> <PASSWORD>")) {
                     break;
                 }
-
                 try {
                     UserData userData = new UserData(cmdArgs[0], cmdArgs[1], null);
                     currentAuth = facade.login(userData);
@@ -403,9 +401,7 @@ public class Main {
 
                 int col = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
                 int row = Integer.parseInt(cmdArgs[0].charAt(1) + "");
-
                 ChessPosition position = new ChessPosition(row, col);
-
                 ws.showAvailableMoves(position);
                 break;
             case "move":
@@ -417,7 +413,6 @@ public class Main {
                     ClientUtils.failureOutput("↪  [STARTING_POSITION] requires exactly one column and one row in the format \"A4\"");
                     break;
                 }
-
                 if (cmdArgs[1].length() != 2) {
                     ClientUtils.failureOutput("↪  [ENDING_POSITION] requires exactly one column and one row in the format \"A4\"");
                     break;
@@ -430,20 +425,15 @@ public class Main {
 
                 int colStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
                 int rowStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
-
                 ChessPosition startingPosition = new ChessPosition(rowStart, colStart);
-
                 int colEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
                 int rowEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
-
                 ChessGame.TeamColor teamColor = ws.getCurrentColor();
 
-                if (
-                    (
+                if ((
                         (teamColor == ChessGame.TeamColor.BLACK && rowEnd == 1) ||
                         (teamColor == ChessGame.TeamColor.WHITE && rowEnd == 8)
-                    ) && promotionPiece == null
-                ) {
+                    ) && promotionPiece == null) {
                     ClientUtils.failureOutput("↪  [POSITION_PIECE] is required when moving to the end of the board");
                 }
 
