@@ -36,7 +36,7 @@ public class GameDAOTests {
     void createGameNormal() {
         try {
             gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
+                    new GameData(1, null, null, "New Game", new ChessGame(), GameData.GameStatus.STARTING)
             );
         } catch (DataAccessException exception) {
             fail();
@@ -107,10 +107,10 @@ public class GameDAOTests {
     void createGameBad() {
         try {
             gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
+                    new GameData(1, null, null, "New Game", new ChessGame(), GameData.GameStatus.STARTING)
             );
             gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
+                    new GameData(1, null, null, "New Game", new ChessGame(), GameData.GameStatus.STARTING)
             );
             fail();
         } catch (DataAccessException exception) {
@@ -152,13 +152,13 @@ public class GameDAOTests {
     private void createThreeGames() {
         try {
             gameDAODB.createGame(
-                    new GameData(1, null, null, "New Game", new ChessGame())
+                    new GameData(1, null, null, "New Game", new ChessGame(), GameData.GameStatus.STARTING)
             );
             gameDAODB.createGame(
-                    new GameData(2, null, null, "New Game 2", new ChessGame())
+                    new GameData(2, null, null, "New Game 2", new ChessGame(), GameData.GameStatus.STARTING)
             );
             gameDAODB.createGame(
-                    new GameData(3, null, null, "New Game 3", new ChessGame())
+                    new GameData(3, null, null, "New Game 3", new ChessGame(), GameData.GameStatus.STARTING)
             );
         } catch (DataAccessException exception) {
             fail();

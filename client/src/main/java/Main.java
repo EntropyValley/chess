@@ -6,6 +6,7 @@ import model.GameData;
 import model.UserData;
 import ui.ClientState;
 import ui.ClientUtils;
+import websocket.WebSocketFacade;
 
 import java.util.*;
 
@@ -14,10 +15,13 @@ import static ui.EscapeSequences.*;
 public class Main {
     static ClientState currentState = ClientState.LOGGED_OUT;
     static AuthData currentAuth = null;
+    static ServerFacade facade;
+    static WebSocketFacade ws;
+    static String url = "http://localhost:8083";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        ServerFacade facade = new ServerFacade("http://localhost:8083");
+        facade = new ServerFacade(url);
 
         System.out.print(ERASE_SCREEN);
         System.out.println("👑 Welcome to 240 Chess. Type help to get started. 👑\n");
@@ -44,24 +48,32 @@ public class Main {
 
             switch (currentState) {
                 case LOGGED_OUT:
-                    if (handleLoggedOutCommands(cmdName, cmdArgs, facade)) {
+                    if (handleLoggedOutCommands(cmdName, cmdArgs)) {
                         return;
                     }
                     break;
                 case LOGGED_IN:
-                    if (handleLoggedInCommands(cmdName, cmdArgs, facade)) {
+                    if (handleLoggedInCommands(cmdName, cmdArgs)) {
                         return;
                     }
                     break;
                 case PLAYING: // Phase 6
+                    if (handlePlayingCommands(cmdName, cmdArgs)) {
+                        return;
+                    }
+                    break;
                 case OBSERVING: // Phase 6
+                    if (handleObservingCommands(cmdName, cmdArgs)) {
+                        return;
+                    }
+                    break;
                 default:
                     break;
             }
         }
     }
 
-    private static boolean handleLoggedInCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
+    private static boolean handleLoggedInCommands(String cmdName, String[] cmdArgs) {
         switch (cmdName) {
             case "help":
                 ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
@@ -71,10 +83,9 @@ public class Main {
                 ClientUtils.genericOutput("↪  observe <id> - Observe a game");
                 ClientUtils.genericOutput("↪  logout");
                 ClientUtils.genericOutput("↪  help");
-                ClientUtils.genericOutput("↪  quit");
                 break;
             case "create":
-                handleCreateCommand(cmdArgs, facade);
+                handleCreateCommand(cmdArgs);
                 break;
             case "list":
                 if (forceNArgs(cmdArgs, 0, "list", "")) {
@@ -106,10 +117,10 @@ public class Main {
                 }
                 break;
             case "play":
-                handlePlayCommand(cmdArgs, facade);
+                handlePlayCommand(cmdArgs);
                 break;
             case "observe":
-                handleObserveCommand(cmdArgs, facade);
+                handleObserveCommand(cmdArgs);
                 break;
             case "logout":
                 if (forceNArgs(cmdArgs, 0, "logout", "")) {
@@ -129,9 +140,6 @@ public class Main {
                     ClientUtils.failureOutput("↪  Failed to logout: unknown error");
                 }
                 break;
-            case "quit":
-                ClientUtils.successOutput("↪ Thanks for playing!");
-                return true;
             case "deletealldataiunderstandtheconsequencesofthisaction":
                 try {
                     facade.clear();
@@ -152,7 +160,7 @@ public class Main {
         return false;
     }
 
-    private static void handleCreateCommand(String[] cmdArgs, ServerFacade facade) {
+    private static void handleCreateCommand(String[] cmdArgs) {
         if (forceNArgs(cmdArgs, 1, "create", "<GAME_NAME>")) {
             return;
         }
@@ -179,20 +187,20 @@ public class Main {
 
     record PlayerInfo(GameData gameData, ChessGame.TeamColor teamColor) {}
 
-    private static void handleObserveCommand(String[] cmdArgs, ServerFacade facade) {
+    private static void handleObserveCommand(String[] cmdArgs) {
         if (forceNArgs(cmdArgs, 2, "observe", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
             return;
         }
 
-        PlayerInfo playerInfo = getMatchedGame(cmdArgs, facade);
+        PlayerInfo playerInfo = getMatchedGame(cmdArgs);
         if (playerInfo == null) {
             return;
         }
 
-        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor());
+        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor(), null, null);
     }
 
-    private static PlayerInfo getMatchedGame(String[] cmdArgs, ServerFacade facade) {
+    private static PlayerInfo getMatchedGame(String[] cmdArgs) {
         int observationIndex;
 
         try {
@@ -241,12 +249,12 @@ public class Main {
         return new PlayerInfo(observedGame, observationColor);
     }
 
-    private static void handlePlayCommand(String[] cmdArgs, ServerFacade facade) {
+    private static void handlePlayCommand(String[] cmdArgs) {
         if (forceNArgs(cmdArgs, 2, "play", "<GAME_INDEX> <COLOR:WHITE|BLACK>")) {
             return;
         }
 
-        PlayerInfo playerInfo = getMatchedGame(cmdArgs, facade);
+        PlayerInfo playerInfo = getMatchedGame(cmdArgs);
 
         if (playerInfo == null) {
             return;
@@ -293,7 +301,9 @@ public class Main {
             ClientUtils.successOutput("↪  Rejoining game...");
         }
 
-        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor());
+        currentState = ClientState.PLAYING;
+        ws = new WebSocketFacade(url);
+        ws.connect(currentAuth, playerInfo.gameData.gameID(), playerInfo.teamColor());
     }
 
     private static void sortGameList(List<GameData> gameList) {
@@ -305,13 +315,13 @@ public class Main {
         });
     }
 
-    private static boolean handleLoggedOutCommands(String cmdName, String[] cmdArgs, ServerFacade facade) {
+    private static boolean handleLoggedOutCommands(String cmdName, String[] cmdArgs) {
         switch (cmdName) {
             case "help":
                 ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
                 ClientUtils.genericOutput("↪  register <USERNAME> <PASSWORD> <EMAIL>");
                 ClientUtils.genericOutput("↪  login <USERNAME> <PASSWORD>");
-                ClientUtils. genericOutput("↪  help");
+                ClientUtils.genericOutput("↪  help");
                 ClientUtils.genericOutput("↪  quit");
                 break;
             case "register":
@@ -375,5 +385,99 @@ public class Main {
             return true; // break
         }
         return false; // continue
+    }
+
+    private static boolean handlePlayingCommands(String cmdName, String[] cmdArgs) {
+        switch(cmdName) {
+            case "moves":
+                if (forceNArgs(cmdArgs, 1, "moves", "[STARTING_POSITION]")) {
+                    break;
+                }
+
+                if (cmdArgs[0].length() != 2) {
+                    ClientUtils.failureOutput("↪  [STARTING_POSITION] requires exactly one column and one row in the format \"A4\"");
+                    break;
+                }
+
+                int row = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
+                int col = Integer.parseInt(cmdArgs[0].charAt(1) + "");
+
+                ChessPosition position = new ChessPosition(row, col);
+
+                ws.showAvailableMoves(position);
+            case "move":
+                if (forceNArgs(cmdArgs, 3, "move", "[STARTING_POSITION] [ENDING_POSITION] [PROMOTION_PIECE]")) {
+                    break;
+                }
+
+                if (cmdArgs[0].length() != 2) {
+                    ClientUtils.failureOutput("↪  [STARTING_POSITION] requires exactly one column and one row in the format \"A4\"");
+                    break;
+                }
+
+                if (cmdArgs[1].length() != 2) {
+                    ClientUtils.failureOutput("↪  [ENDING_POSITION] requires exactly one column and one row in the format \"A4\"");
+                    break;
+                }
+
+                int rowStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
+                int colStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
+
+                ChessPosition startingPosition = new ChessPosition(rowStart, colStart);
+
+                int rowEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
+                int colEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
+
+                ChessPosition endingPosition = new ChessPosition(rowEnd, colEnd);
+
+                ws.makeMove(
+                        currentAuth,
+                        new ChessMove(startingPosition, endingPosition, ChessPiece.PieceType.valueOf(cmdArgs[2]))
+                );
+            case "resign":
+                ws.resign(currentAuth);
+                ws = null;
+                currentState = ClientState.LOGGED_IN;
+            case "leave":
+                assert ws != null;
+                ws.leave(currentAuth);
+                ws = null;
+                currentState = ClientState.LOGGED_IN;
+            case "redraw":
+                assert ws != null;
+                ws.redrawCurrentGame();
+            case "help":
+            default:
+                ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
+                ClientUtils.genericOutput("↪  moves <START>");
+                ClientUtils.genericOutput("↪  move <START> <END>");
+                ClientUtils.genericOutput("↪  resign");
+                ClientUtils.genericOutput("↪  leave");
+                ClientUtils.genericOutput("↪  redraw");
+                ClientUtils.genericOutput("↪  help");
+                break;
+        }
+        return false;
+    }
+
+    private static boolean handleObservingCommands(String cmdName, String[] cmdArgs) {
+        switch(cmdName) {
+            case "leave":
+                assert ws != null;
+                ws.leave(currentAuth);
+                ws = null;
+                currentState = ClientState.LOGGED_IN;
+            case "redraw":
+                assert ws != null;
+                ws.redrawCurrentGame();
+            case "help":
+            default:
+                ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
+                ClientUtils.genericOutput("↪  leave");
+                ClientUtils.genericOutput("↪  redraw");
+                ClientUtils.genericOutput("↪  help");
+                break;
+        }
+        return false;
     }
 }

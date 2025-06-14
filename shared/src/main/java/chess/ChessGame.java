@@ -86,7 +86,7 @@ public class ChessGame {
 
         Collection<ChessMove> validPieceMoves = validMoves(startPosition);
 
-        // If move is found amidst valid moves, make the move;  Else, the move cannot be performed
+        // If move is found amidst valid moves, make the move; Else, the move cannot be performed
         if (validPieceMoves.contains(move)) {
             currentBoard.addPiece(startPosition, null);
             currentBoard.addPiece(

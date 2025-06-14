@@ -57,9 +57,9 @@ public class GameServiceTests {
             throw new RuntimeException(e);
         }
 
-        GameData game1 = new GameData(1, null, null, "Game 1", new ChessGame());
-        GameData game2 = new GameData(2, null, null, "Game 2", new ChessGame());
-        GameData game3 = new GameData(3, null, null, "Game 3", new ChessGame());
+        GameData game1 = new GameData(1, null, null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING);
+        GameData game2 = new GameData(2, null, null, "Game 2", new ChessGame(), GameData.GameStatus.STARTING);
+        GameData game3 = new GameData(3, null, null, "Game 3", new ChessGame(), GameData.GameStatus.STARTING);
 
         try {
             gameDAO.createGame(game1);
@@ -85,9 +85,9 @@ public class GameServiceTests {
     void listNoAuth() throws DataAccessException {
         String authToken = UUID.randomUUID().toString();
 
-        GameData game1 = new GameData(1, null, null, "Game 1", new ChessGame());
-        GameData game2 = new GameData(2, null, null, "Game 2", new ChessGame());
-        GameData game3 = new GameData(3, null, null, "Game 3", new ChessGame());
+        GameData game1 = new GameData(1, null, null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING);
+        GameData game2 = new GameData(2, null, null, "Game 2", new ChessGame(), GameData.GameStatus.STARTING);
+        GameData game3 = new GameData(3, null, null, "Game 3", new ChessGame(), GameData.GameStatus.STARTING);
 
         try {
             gameDAO.createGame(game1);
@@ -167,7 +167,7 @@ public class GameServiceTests {
             throw new RuntimeException(e);
         }
 
-        GameData game = new GameData(1, null, null, "Game 1", new ChessGame());
+        GameData game = new GameData(1, null, null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING);
         try {
             gameDAO.createGame(game);
         } catch (DataAccessException e) {
@@ -187,7 +187,7 @@ public class GameServiceTests {
             throw new RuntimeException(e);
         }
 
-        assertEquals(new GameData(1, "testUser", null, "Game 1", new ChessGame()), retrievedGame);
+        assertEquals(new GameData(1, "testUser", null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING), retrievedGame);
     }
 
     @Test
@@ -201,7 +201,7 @@ public class GameServiceTests {
             throw new RuntimeException(e);
         }
 
-        GameData game = new GameData(1, null, null, "Game 1", new ChessGame());
+        GameData game = new GameData(1, null, null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING);
         try {
             gameDAO.createGame(game);
         } catch (DataAccessException e) {
@@ -243,7 +243,7 @@ public class GameServiceTests {
             throw new RuntimeException(e);
         }
 
-        GameData game = new GameData(1, null, null, "Game 1", new ChessGame());
+        GameData game = new GameData(1, null, null, "Game 1", new ChessGame(), GameData.GameStatus.STARTING);
 
         try {
             gameDAO.createGame(game);

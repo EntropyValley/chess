@@ -71,7 +71,8 @@ public class GameService {
         try {
             gameDAO.createGame(
                 new GameData(
-                    gameID, null, null, name, new ChessGame(), GameData.GameStatus.STARTING)
+                    gameID, null, null, name, new ChessGame(), GameData.GameStatus.STARTING
+                )
             );
         } catch (DataAccessException exception) {
             throw new BadRequestException("Unable to create game");

@@ -5,11 +5,11 @@ import exceptions.GameNotFoundException;
 import exceptions.UnauthorizedException;
 import chess.InvalidMoveException;
 
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.Session;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.util.Arrays;
 
 import websocket.commands.UserGameCommand;
 import websocket.commands.MakeMoveCommand;
@@ -49,11 +49,22 @@ public class WebSocketHandler {
         }
     }
 
+    @OnWebSocketError
+    public void onError(Session session, Throwable exception) {
+        System.out.println(exception.toString());
+        System.out.println(Arrays.toString(exception.getStackTrace()));
+    }
+
     private void sendError(Integer gameID, String username, String message) throws IOException {
         sessions.send(gameID, username, new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: " + message));
     }
 
-    private void sendLoadGame(Integer gameID, GameData gameData) throws IOException {
+    private void sendLoadGame(Integer gameID, String username, GameData gameData) throws IOException {
+        ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
+        sessions.send(gameID, username, load);
+    }
+
+    private void broadcastLoadGame(Integer gameID, GameData gameData) throws IOException {
         ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
         sessions.broadcastAll(gameID, load);
     }
@@ -73,11 +84,13 @@ public class WebSocketHandler {
     }
 
     private ChessGame.TeamColor teamColorFromGame(GameData gameData, String username) {
-        return gameData.blackUsername().equals(username) ?
-                    ChessGame.TeamColor.BLACK :
-                gameData.whiteUsername().equals(username) ?
-                    ChessGame.TeamColor.WHITE :
-                    null;
+        if (gameData.blackUsername() != null && gameData.blackUsername().equals(username)) {
+            return ChessGame.TeamColor.BLACK;
+        } else if (gameData.whiteUsername() != null && gameData.whiteUsername().equals(username)) {
+            return ChessGame.TeamColor.WHITE;
+        } else {
+            return null;
+        }
     }
 
     private record Validation(String username, GameData gameData, boolean isValid) {}
@@ -207,7 +220,7 @@ public class WebSocketHandler {
             );
         }
 
-        sendLoadGame(connectCommand.getGameID(), validation.gameData());
+        sendLoadGame(connectCommand.getGameID(), validation.username(), validation.gameData());
     }
 
     private void onMakeMove(Session session, MakeMoveCommand makeMoveCommand) throws IOException {
@@ -217,6 +230,12 @@ public class WebSocketHandler {
         }
 
         ChessGame.TeamColor playerColor = teamColorFromGame(validation.gameData(), validation.username());
+
+        if (validation.gameData().game().getTeamTurn() != playerColor) {
+            sendError(makeMoveCommand.getGameID(), validation.username(), "It is not currently your turn to move...");
+            return;
+        }
+
         ChessPosition startingPos = makeMoveCommand.getChessMove().getStartPosition();
         ChessPosition endingPos = makeMoveCommand.getChessMove().getEndPosition();
         ChessPiece movedPiece = validation.gameData().game().getBoard().getPiece(startingPos);
@@ -228,6 +247,7 @@ public class WebSocketHandler {
                 validation.username(),
                 "Cannot move a piece that does not belong to you"
             );
+            return;
         }
 
         if (validation.gameData().status() == GameData.GameStatus.ENDED) {
@@ -235,6 +255,7 @@ public class WebSocketHandler {
                     makeMoveCommand.getGameID(), validation.username(),
                     "Game has already ended. You can no longer move pieces"
             );
+            return;
         }
 
         ChessGame newGame = validation.gameData().game();
@@ -258,9 +279,10 @@ public class WebSocketHandler {
             gameService.updateGame(makeMoveCommand.getAuthToken(), newGameData);
         } catch (Exception exception) {
             sendError(makeMoveCommand.getGameID(), validation.username(), "Unable to Update Game...");
+            return;
         }
 
-        sendLoadGame(
+        broadcastLoadGame(
             makeMoveCommand.getGameID(),
             newGameData
         );
@@ -323,6 +345,7 @@ public class WebSocketHandler {
                 validation.username(),
                 validation.username() + "is not playing this game – cannot resign."
             );
+            return;
         }
 
         if (validation.gameData().status() == GameData.GameStatus.ENDED) {

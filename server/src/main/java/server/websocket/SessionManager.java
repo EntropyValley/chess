@@ -2,8 +2,9 @@ package server.websocket;
 
 import org.eclipse.jetty.websocket.api.Session;
 import com.google.gson.Gson;
-import websocket.messages.ServerMessage;
+import websocket.messages.*;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.io.IOException;
@@ -25,6 +26,7 @@ public class SessionManager {
 
     public void broadcastExcept(Integer gameID, String exclusionUser, ServerMessage message) throws IOException {
         HashMap<String, Session> gameConnections = sessions.get(gameID);
+        ArrayList<String> removeList = new ArrayList<>();
 
         for (Map.Entry<String, Session> entry : gameConnections.entrySet()) {
             if (entry.getValue().isOpen()) {
@@ -32,20 +34,29 @@ public class SessionManager {
                     entry.getValue().getRemote().sendString(new Gson().toJson(message));
                 }
             } else {
-                gameConnections.remove(entry.getKey());
+                removeList.add(entry.getKey());
             }
+        }
+
+        for (String username : removeList) {
+            gameConnections.remove(username);
         }
     }
 
     public void broadcastAll(Integer gameID, ServerMessage message) throws IOException {
         HashMap<String, Session> gameConnections = sessions.get(gameID);
+        ArrayList<String> removeList = new ArrayList<>();
 
         for (Map.Entry<String, Session> entry : gameConnections.entrySet()) {
             if (entry.getValue().isOpen()) {
                 entry.getValue().getRemote().sendString(new Gson().toJson(message));
             } else {
-                gameConnections.remove(entry.getKey());
+                removeList.add(entry.getKey());
             }
+        }
+
+        for (String username : removeList) {
+            gameConnections.remove(username);
         }
     }
 

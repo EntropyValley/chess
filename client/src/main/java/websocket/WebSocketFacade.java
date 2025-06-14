@@ -67,21 +67,21 @@ public class WebSocketFacade extends Endpoint {
         );
     }
 
-    public void makeMove(AuthData authData, Integer gameID, ChessMove chessMove) {
+    public void makeMove(AuthData authData, ChessMove chessMove) {
         sendCommand(
-            new MakeMoveCommand(UserGameCommand.CommandType.MAKE_MOVE, authData.authToken(), gameID, chessMove)
+            new MakeMoveCommand(UserGameCommand.CommandType.MAKE_MOVE, authData.authToken(), currentGame.gameID(), chessMove)
         );
     }
 
-    public void resign(AuthData authData, Integer gameID) {
+    public void resign(AuthData authData) {
         sendCommand(
-            new UserGameCommand(UserGameCommand.CommandType.RESIGN, authData.authToken(), gameID)
+            new UserGameCommand(UserGameCommand.CommandType.RESIGN, authData.authToken(), currentGame.gameID())
         );
     }
 
-    public void leave(AuthData authData, Integer gameID) {
+    public void leave(AuthData authData) {
         sendCommand(
-            new UserGameCommand(UserGameCommand.CommandType.LEAVE, authData.authToken(), gameID)
+            new UserGameCommand(UserGameCommand.CommandType.LEAVE, authData.authToken(), currentGame.gameID())
         );
     }
 
@@ -101,7 +101,7 @@ public class WebSocketFacade extends Endpoint {
         );
     }
 
-    public void reloadCurrentGame() {
+    public void redrawCurrentGame() {
         ClientUtils.outputGame(
             currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
             null, null
@@ -120,5 +120,9 @@ public class WebSocketFacade extends Endpoint {
             currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
             startingPosition, endingPositions
         );
+    }
+
+    public ChessGame.TeamColor getCurrentColor() {
+        return currentColor;
     }
 }
