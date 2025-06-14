@@ -17,11 +17,14 @@ import java.util.HashSet;
 import com.google.gson.Gson;
 
 public class WebSocketFacade extends Endpoint {
+    AuthData currentAuth;
     Session session;
     GameData currentGame;
     ChessGame.TeamColor currentColor;
 
-    public WebSocketFacade(String url) throws ResponseException {
+    public WebSocketFacade(String url, AuthData authData) throws ResponseException {
+        this.currentAuth = authData;
+
         try {
             String wsURL = url.replace("http", "ws") + "/ws";
             URI wsURI = new URI(wsURL);
@@ -29,14 +32,17 @@ public class WebSocketFacade extends Endpoint {
             WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
             session = wsContainer.connectToServer(this, wsURI);
 
-            session.addMessageHandler((MessageHandler.Whole<String>) msg -> {
-                ServerMessage serverMessage = new Gson().fromJson(msg, ServerMessage.class);
+            session.addMessageHandler(new MessageHandler.Whole<String>() {
+                @Override
+                public void onMessage(String msg){
+                    ServerMessage serverMessage = new Gson().fromJson(msg, ServerMessage.class);
 
-                switch(serverMessage.getServerMessageType()) {
-                    case NOTIFICATION -> onNotification(new Gson().fromJson(msg, NotificationMessage.class));
-                    case ERROR -> onError(new Gson().fromJson(msg, ErrorMessage.class));
-                    case LOAD_GAME -> onLoadGame(new Gson().fromJson(msg, LoadGameMessage.class));
-                    case null -> System.out.println("Invalid Server Message received...");
+                    switch (serverMessage.getServerMessageType()) {
+                        case NOTIFICATION -> onNotification(new Gson().fromJson(msg, NotificationMessage.class));
+                        case ERROR -> onError(new Gson().fromJson(msg, ErrorMessage.class));
+                        case LOAD_GAME -> onLoadGame(new Gson().fromJson(msg, LoadGameMessage.class));
+                        case null -> System.out.println("Invalid Server Message received...");
+                    }
                 }
             });
         } catch (URISyntaxException exception) {
@@ -96,14 +102,14 @@ public class WebSocketFacade extends Endpoint {
     public void onLoadGame(LoadGameMessage message) {
         currentGame = message.game();
         ClientUtils.outputGame(
-            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            currentAuth, currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
             null, null
         );
     }
 
     public void redrawCurrentGame() {
         ClientUtils.outputGame(
-            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            currentAuth, currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
             null, null
         );
     }
@@ -117,7 +123,7 @@ public class WebSocketFacade extends Endpoint {
         }
 
         ClientUtils.outputGame(
-            currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
+            currentAuth, currentGame, currentColor!=null ? currentColor : ChessGame.TeamColor.WHITE,
             startingPosition, endingPositions
         );
     }

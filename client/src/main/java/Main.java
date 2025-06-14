@@ -32,6 +32,8 @@ public class Main {
                     System.out.print("[LOGGED_OUT] >>> ");
                     break;
                 case LOGGED_IN:
+                case PLAYING:
+                case OBSERVING:
                     System.out.print("[USER: " + currentAuth.username() + "] >>> ");
                     break;
                 default:
@@ -197,7 +199,7 @@ public class Main {
             return;
         }
 
-        ClientUtils.outputGame(playerInfo.gameData(), playerInfo.teamColor(), null, null);
+        ClientUtils.outputGame(currentAuth, playerInfo.gameData(), playerInfo.teamColor(), null, null);
     }
 
     private static PlayerInfo getMatchedGame(String[] cmdArgs) {
@@ -302,7 +304,7 @@ public class Main {
         }
 
         currentState = ClientState.PLAYING;
-        ws = new WebSocketFacade(url);
+        ws = new WebSocketFacade(url, currentAuth);
         ws.connect(currentAuth, playerInfo.gameData.gameID(), playerInfo.teamColor());
     }
 
@@ -405,8 +407,9 @@ public class Main {
                 ChessPosition position = new ChessPosition(row, col);
 
                 ws.showAvailableMoves(position);
+                break;
             case "move":
-                if (forceNArgs(cmdArgs, 3, "move", "[STARTING_POSITION] [ENDING_POSITION] [PROMOTION_PIECE]")) {
+                if (forceNArgs(cmdArgs, 2, "move", "[STARTING_POSITION] [ENDING_POSITION] (PROMOTION)")) {
                     break;
                 }
 
@@ -420,6 +423,11 @@ public class Main {
                     break;
                 }
 
+                ChessPiece.PieceType promotionPiece = null;
+                if (cmdArgs.length >= 3) {
+                    promotionPiece = ChessPiece.PieceType.valueOf(cmdArgs[2]);
+                }
+
                 int rowStart = cmdArgs[0].toLowerCase().charAt(0) - 97 + 1;
                 int colStart = Integer.parseInt(cmdArgs[0].charAt(1) + "");
 
@@ -428,29 +436,44 @@ public class Main {
                 int rowEnd = cmdArgs[1].toLowerCase().charAt(0) - 97 + 1;
                 int colEnd = Integer.parseInt(cmdArgs[1].charAt(1) + "");
 
+                ChessGame.TeamColor teamColor = ws.getCurrentColor();
+
+                if (
+                    (
+                        (teamColor == ChessGame.TeamColor.BLACK && rowEnd == 1) ||
+                        (teamColor == ChessGame.TeamColor.WHITE && rowEnd == 8)
+                    ) && promotionPiece == null
+                ) {
+                    ClientUtils.failureOutput("↪  [POSITION_PIECE] is required when moving to the end of the board");
+                }
+
                 ChessPosition endingPosition = new ChessPosition(rowEnd, colEnd);
 
                 ws.makeMove(
-                        currentAuth,
-                        new ChessMove(startingPosition, endingPosition, ChessPiece.PieceType.valueOf(cmdArgs[2]))
+                    currentAuth,
+                    new ChessMove(startingPosition, endingPosition, promotionPiece)
                 );
+                break;
             case "resign":
                 ws.resign(currentAuth);
                 ws = null;
                 currentState = ClientState.LOGGED_IN;
+                break;
             case "leave":
                 assert ws != null;
                 ws.leave(currentAuth);
                 ws = null;
                 currentState = ClientState.LOGGED_IN;
+                break;
             case "redraw":
                 assert ws != null;
                 ws.redrawCurrentGame();
+                break;
             case "help":
             default:
                 ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");
                 ClientUtils.genericOutput("↪  moves <START>");
-                ClientUtils.genericOutput("↪  move <START> <END>");
+                ClientUtils.genericOutput("↪  move <START> <END> (PROMOTION)");
                 ClientUtils.genericOutput("↪  resign");
                 ClientUtils.genericOutput("↪  leave");
                 ClientUtils.genericOutput("↪  redraw");
@@ -467,9 +490,11 @@ public class Main {
                 ws.leave(currentAuth);
                 ws = null;
                 currentState = ClientState.LOGGED_IN;
+                break;
             case "redraw":
                 assert ws != null;
                 ws.redrawCurrentGame();
+                break;
             case "help":
             default:
                 ClientUtils.genericOutput("↪ AVAILABLE COMMANDS:");

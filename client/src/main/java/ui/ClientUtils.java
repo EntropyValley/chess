@@ -3,6 +3,7 @@ package ui;
 import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
+import model.AuthData;
 import model.GameData;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import static java.lang.Integer.parseInt;
 import static ui.EscapeSequences.*;
 
 public class ClientUtils {
-    public static void outputGame(GameData game, ChessGame.TeamColor color, ChessPosition highlightStart, HashSet<ChessPosition> highlightEnd) {
+    public static void outputGame(AuthData currentAuth, GameData game, ChessGame.TeamColor color, ChessPosition highlightStart, HashSet<ChessPosition> highlightEnd) {
         boolean reverse = color == ChessGame.TeamColor.BLACK;
 
         ArrayList<String> letters = generateDefaultLettersArray();
@@ -26,7 +27,7 @@ public class ClientUtils {
             Collections.reverse(numbers);
         }
 
-        System.out.print(SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
+        System.out.print("\n" + SET_BG_COLOR_LIGHT_GREY + SET_TEXT_COLOR_BLACK + "   ");
 
         for (String letter : letters) {
             System.out.print(letter);
@@ -44,11 +45,11 @@ public class ClientUtils {
 
             for (int i=1; i<=8; i++) {
                 String bgColor;
-                ChessPosition position = new ChessPosition(parseInt(number), i);
+                ChessPosition position = new ChessPosition(parseInt(number.trim()), i);
 
                 if (position.equals(highlightStart)) {
                     bgColor = SET_BG_COLOR_YELLOW;
-                } else if (highlightEnd.contains(position)) {
+                } else if (highlightEnd != null && highlightEnd.contains(position)) {
                     bgColor = SET_BG_COLOR_GREEN;
                 } else if (rawNumber%2==0) {
                     if (color == ChessGame.TeamColor.WHITE) {
@@ -114,6 +115,7 @@ public class ClientUtils {
         }
 
         System.out.print("   " + RESET_BG_COLOR + RESET_TEXT_COLOR + "\n");
+        System.out.print("[USER: " + currentAuth.username() + "] >>> ");
     }
 
     public static ArrayList<String> generateDefaultNumbersArray() {

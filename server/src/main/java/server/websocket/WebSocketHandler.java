@@ -62,11 +62,13 @@ public class WebSocketHandler {
     private void sendLoadGame(Integer gameID, String username, GameData gameData) throws IOException {
         ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
         sessions.send(gameID, username, load);
+        System.out.println("SENDING LOADGAME TO " + username + " IN GAME " + gameID);
     }
 
     private void broadcastLoadGame(Integer gameID, GameData gameData) throws IOException {
         ServerMessage load = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, gameData);
         sessions.broadcastAll(gameID, load);
+        System.out.println("BROADCASTING LOADGAME TO GAME" + gameID);
     }
 
     private void broadcastNotification(Integer gameID, String exclusionUsername, String message) throws IOException {
@@ -239,7 +241,7 @@ public class WebSocketHandler {
         ChessPosition startingPos = makeMoveCommand.getChessMove().getStartPosition();
         ChessPosition endingPos = makeMoveCommand.getChessMove().getEndPosition();
         ChessPiece movedPiece = validation.gameData().game().getBoard().getPiece(startingPos);
-        ChessGame.TeamColor pieceColor = movedPiece.getTeamColor();
+        ChessGame.TeamColor pieceColor = movedPiece != null ? movedPiece.getTeamColor() : null ;
 
         if (playerColor != pieceColor) {
             sendError(
@@ -354,6 +356,7 @@ public class WebSocketHandler {
                 validation.username(),
                 "Game is over – cannot resign."
             );
+            return;
         }
 
         notifyAll(command.getGameID(), validation.username() + "has resigned this game. Game Over!");

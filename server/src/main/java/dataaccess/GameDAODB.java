@@ -24,7 +24,7 @@ public class GameDAODB implements GameDAO {
                         white varchar(256) DEFAULT NULL,
                         black varchar(256) DEFAULT NULL,
                         game text DEFAULT NULL,
-                        status enum('STARTING', 'ENDED') DEFAULT 'STARTING',
+                        status varchar(10) NOT NULL,
                         PRIMARY KEY (id),
                         INDEX(id)
                     )
@@ -45,8 +45,9 @@ public class GameDAODB implements GameDAO {
         String white = results.getString("white");
         String black = results.getString("black");
         ChessGame game = new Gson().fromJson(results.getString("game"), ChessGame.class);
+        GameData.GameStatus status = GameData.GameStatus.valueOf(results.getString("status"));
 
-        return new GameData(id, white, black, name, game, GameData.GameStatus.STARTING);
+        return new GameData(id, white, black, name, game, status);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class GameDAODB implements GameDAO {
 
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT id, name, white, black, game, status FROM games"
+                "SELECT * FROM games WHERE status!='ENDED'"
             )) {
                 try (ResultSet results = statement.executeQuery()) {
                     while (results.next()) {
@@ -105,7 +106,7 @@ public class GameDAODB implements GameDAO {
     public GameData findGame(int gameID) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT id, name, white, black, game FROM games WHERE id = ?"
+                "SELECT * FROM games WHERE id = ?"
             )) {
                 statement.setInt(1, gameID);
 
